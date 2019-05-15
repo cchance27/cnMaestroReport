@@ -1,0 +1,28 @@
+{
+  "name": "cnMaestroReport",
+  "version": "1.0.0",
+  "description": "",
+  "main": ".\\bin\\app.js",
+  "scripts": {
+	"exec": "tsc && node bin\\app.js"
+  },
+  "author": "Chris Chance",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "d3": "^5.9.2",
+    "jsdom": "^11.12.0",
+    "moment": "^2.24.0",
+    "pdfkit": "^0.9.1",
+    "request": "^2.88.0",
+    "sendmail": "^1.4.1",
+    "svg-to-pdfkit": "^0.1.7",
+    "voilab-pdf-table": "^0.4.1"
+  },
+  "devDependencies": {
+    "@types/d3": "^5.7.2",
+    "@types/jsdom": "^11.12.0",
+    "@types/node": "^10.14.6",
+    "typescript": "^3.4.5"
+  }
+}
