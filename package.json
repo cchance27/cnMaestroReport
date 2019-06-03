@@ -1,15 +1,15 @@
 {
-  "name": "cnMaestroReport",
+  "name": "cnmaestroreport",
   "version": "1.0.0",
   "description": "",
   "main": ".\\bin\\app.js",
   "scripts": {
-	"exec": "tsc && node bin\\app.js"
+    "exec": "tsc && node bin\\app.js"
   },
   "author": "Chris Chance",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.19.0",
     "d3": "^5.9.2",
     "jsdom": "^11.12.0",
     "moment": "^2.24.0",
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@types/d3": "^5.7.2",
     "@types/jsdom": "^11.12.0",
-    "@types/node": "^10.14.6",
-    "typescript": "^3.4.5"
+    "@types/node": "^10.14.8",
+    "typescript": "^3.5.1"
   }
 }
