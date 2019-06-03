@@ -55,15 +55,22 @@ export async function getCNMapi(baseURL: string, apiPath: string, accessToken: s
         let res = await axios.get(baseURL + apiPath)
         let values: Array<{}> = res.data.data
 
-        if (getAll && (res.data.paging.limit + res.data.paging.offset) < res.data.paging.total) {
-            // We have more to get and we want to get it
+        // Temporary workaround for the paging issue for performance on 2.2.0r60
+        let workaround = false;
+        if ((res.data.paging.total == res.data.paging.limit) && apiPath.includes("performance")) { workaround = true; } // We got a full 100 results so, let's ask for more.
 
+        // Check if we need to get more
+        if (getAll && (((res.data.paging.limit + res.data.paging.offset) < res.data.paging.total) || workaround)) {
             let offsetText = "?offset="
             if (apiPath.includes("?")) { offsetText = "&offset=" }
-
-            while ((res.data.paging.limit + res.data.paging.offset) < res.data.paging.total) {
+            
+            while (((res.data.paging.limit + res.data.paging.offset) < res.data.paging.total) || workaround) {
+                workaround = false
                 res = await axios.get(baseURL + apiPath + offsetText + (res.data.paging.limit + res.data.paging.offset))
                 values = values.concat(res.data.data)
+
+                // Temporary workaround for the paging issue for performance on 2.2.0r60
+                if ((res.data.paging.total == res.data.paging.limit) && apiPath.includes("performance")) { workaround = true; }
             }
         }
 
