@@ -15,7 +15,7 @@ const end = Math.round((new Date()).getTime() / 1000)
 const start = end - (days * (24 * 3600))
 let startTime = new Date(start * 1000).toISOString()
 let endTime = new Date(end * 1000).toISOString()
-let filename = "cnMaestroReport " + require('moment')(new Date(startTime)).format("YYYY-MM-DD") + ".pdf";
+let filename = "reports/cnMaestroReport " + require('moment')(new Date(startTime)).format("YYYY-MM-DD") + ".pdf";
 
 const writer = require('fs').createWriteStream(filename)
 writer.on('finish', () => sendEmail())
