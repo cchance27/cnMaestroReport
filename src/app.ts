@@ -6,6 +6,7 @@ import PDFDocument from 'pdfkit'
 import SVGtoPDF from 'svg-to-pdfkit'
 import PdfTable from 'voilab-pdf-table'
 import {smtpHost, smtpPort, sendMail, toEmailAddress, days, clientid, client_secret, baseURL, color, logoFile} from './config'
+let moment = require('moment');
 
 const mailer = require('sendmail')({ smtpHost: smtpHost, smtpPort: smtpPort })
 
@@ -15,7 +16,7 @@ const end = Math.round((new Date()).getTime() / 1000)
 const start = end - (days * (24 * 3600))
 let startTime = new Date(start * 1000).toISOString()
 let endTime = new Date(end * 1000).toISOString()
-let filename = "reports/cnMaestroReport " + require('moment')(new Date(startTime)).format("YYYY-MM-DD") + ".pdf";
+let filename = `cnMaestroReport ${moment(new Date(startTime)).format("YYYY-MM-DD")}.pdf`;;
 
 const writer = require('fs').createWriteStream(filename)
 writer.on('finish', () => sendEmail())
@@ -45,7 +46,9 @@ async function main() {
             for (let i = 0; i < apResults.length; i++) {
                 console.log(`Generate SVG: ${apResults[i].name}`)
                 svgs[tower['id']].push(await graph(apResults[i]))
+                let svgTest = svgs[tower['id']][i];
             }
+            break; // BREAK AFTER FIRST AP FOR TESTING
         }
 
         await generateReport()
@@ -72,7 +75,7 @@ function sendEmail() {
         mailer({
             from: 'noreply@localhost.localdomain',
             to: toEmailAddress,
-            subject: `Canopy 450 Report (${require('moment')(new Date(startTime)).format("MM/DD/YYYY")} - ${require('moment')(new Date(endTime)).format("MM/DD/YYYY")})`,
+            subject: `Canopy 450 Report (${moment(new Date(startTime)).format("MM/DD/YYYY")} - ${moment(new Date(endTime)).format("MM/DD/YYYY")})`,
             html: html,
             attachments: [{ filename: filename, path: filename }]
         }, function (err, reply) {
@@ -99,7 +102,7 @@ function generateReport() {
             //SVGtoPDF(doc, utslogo, (doc.page.width / 2) - 88, (doc.page.height / 3) - 100)
             doc.font('DaxOT.ttf')
             doc.fontSize('32').text("Canopy450 Weekly Performance Report", 0, 0.4 * (doc.page.height - doc.heightOfString("Canopy450 Weekly Performance Report", { width: doc.page.width, align: 'center' })), { width: doc.page.width, align: 'center' })
-            doc.fontSize('12').text(`${require('moment')(new Date(startTime)).format("MM/DD/YYYY")} - ${require('moment')(new Date(endTime)).format("MM/DD/YYYY")}`, { width: doc.page.width, align: 'center' })
+            doc.fontSize('12').text(`${moment(new Date(startTime)).format("MM/DD/YYYY")} - ${moment(new Date(endTime)).format("MM/DD/YYYY")}`, { width: doc.page.width, align: 'center' })
 
             let table = new PdfTable(doc, { bottomMargin: 20 })
             table.addColumns(columns)
@@ -142,7 +145,7 @@ function generateReport() {
                         doc.fillColor('lightgrey')
                         doc.fontSize('18')
                         doc.text(svgTower, 20, 15)
-                        doc.text(require('moment')(new Date()).format("MM/DD/YYYY"), 500, 15)
+                        doc.text(moment(new Date()).format("MM/DD/YYYY"), 500, 15)
                         thisSVGPosition = 0
                     }
                     console.log(`Adding SVG: ${svgTower} - ${svg} - ${pdfSVGloc[thisSVGPosition]}` )
@@ -166,8 +169,10 @@ function grabTowerAPs(APs: Array<apEntry>, startTime: string, endTime: string, a
         try {
             let apResults: Array<AP> = []
             for (let i = 0; i <= APs.length - 1; i++) {
+                //TODO: Refactor all of this now that they redid the API and do proper timestamps we don't need to do the tricks we used to do.
+
                 console.log(`Grabbing AP: ${APs[i].mac}`)
-                let dayResults: any = await getCNMapi(baseURL, `/devices/${APs[i].mac}/performance?start_time=${startTime}&stop_time=${endTime}&fields=radio.dl_throughput,radio.ul_throughput,radio.dl_frame_utilization,radio.ul_frame_utilization,sm_count,sm_drops`, accessToken)
+                let dayResults: any = await getCNMapi(baseURL, `/devices/${APs[i].mac}/performance?start_time=${startTime}&stop_time=${endTime}&fields=timestamp,radio.dl_throughput,radio.ul_throughput,radio.dl_frame_utilization,radio.ul_frame_utilization,sm_count,sm_drops`, accessToken)
 
                 let valueDL: Array<metricEntry> = []
                 let valueUL: Array<metricEntry> = []
@@ -179,29 +184,25 @@ function grabTowerAPs(APs: Array<apEntry>, startTime: string, endTime: string, a
                 let sessionDrops: Array<metricEntry> = []
 
                 let APhz: number = Number(APs[i].radio.channel_width.split(" ")[0]) * 1000
-                let DLframe: number = Number(APs[i].radio.tdd_ratio.split("/")[0]) / 100
+                let DLframe: number = .8 //Number(APs[i].radio.tdd_ratio.split("/")[0]) / 100 // TODO: sending CC instead of frame suddenly
                 let DLhz: number = APhz * DLframe
                 let ULhz: number = APhz * (1 - DLframe)
 
-                let timeStamp = start
                 dayResults.forEach((day) => {
-                    for (let k in day.radio.dl_throughput) {
-                        valueDL.push({ 'timestamp': timeStamp, 'data': day.radio.dl_throughput[k] })
-                        valueUL.push({ 'timestamp': timeStamp, 'data': day.radio.ul_throughput[k] })
-                        valueFRDL.push({ 'timestamp': timeStamp, 'data': day.radio.dl_frame_utilization[k] })
-                        valueFRUL.push({ 'timestamp': timeStamp, 'data': day.radio.ul_frame_utilization[k] })
-                        let bphDLclean = ((day.radio.dl_throughput[k] / (day.radio.dl_frame_utilization[k] / 100)) / DLhz) != Infinity ? ((day.radio.dl_throughput[k] / (day.radio.dl_frame_utilization[k] / 100)) / DLhz) : 0
-                        let bphULclean = ((day.radio.ul_throughput[k] / (day.radio.ul_frame_utilization[k] / 100)) / ULhz) != Infinity ? ((day.radio.ul_throughput[k] / (day.radio.ul_frame_utilization[k] / 100)) / ULhz) : 0
-                        bphDL.push({ 'timestamp': timeStamp, 'data': bphDLclean })
-                        bphUL.push({ 'timestamp': timeStamp, 'data': bphULclean })
-                        sessions.push({ 'timestamp': timeStamp, 'data': day.sm_count[k] })
-                        sessionDrops.push({ 'timestamp': timeStamp, 'data': day.sm_drops[k] })
-                        timeStamp += 3600
-                    }
+                    let timeStamp = Number(Date.parse(day.timestamp)) / 1000
+                    valueDL.push({ 'timestamp': timeStamp, 'data': day.radio.dl_throughput })
+                    valueUL.push({ 'timestamp': timeStamp, 'data': day.radio.ul_throughput })
+                    valueFRDL.push({ 'timestamp': timeStamp, 'data': day.radio.dl_frame_utilization })
+                    valueFRUL.push({ 'timestamp': timeStamp, 'data': day.radio.ul_frame_utilization })
+                    let bphDLclean = ((day.radio.dl_throughput / (day.radio.dl_frame_utilization / 100)) / DLhz) != Infinity ? ((day.radio.dl_throughput / (day.radio.dl_frame_utilization / 100)) / DLhz) : 0
+                    let bphULclean = ((day.radio.ul_throughput / (day.radio.ul_frame_utilization / 100)) / ULhz) != Infinity ? ((day.radio.ul_throughput / (day.radio.ul_frame_utilization / 100)) / ULhz) : 0
+                    bphDL.push({ 'timestamp': timeStamp, 'data': bphDLclean })
+                    bphUL.push({ 'timestamp': timeStamp, 'data': bphULclean })
+                    sessions.push({ 'timestamp': timeStamp, 'data': day.sm_count })
+                    sessionDrops.push({ 'timestamp': timeStamp, 'data': day.sm_drops })
                 })
 
-                //TODO: Double check what happens when we have missing hours from the site being down
-                //TODO: Look into grabbing 450m vs 450 and grabbing the other efficiency graphs.
+                //TODO: Look into grabbing 450m vs 450 and grabbing the other efficiency graphs when they add support for 450m MU-MIMO
 
                 let metrics: metric[] = []
                 metrics.push({ "name": "DL Throughput", "values": valueDL, "axis": 0, "congestion": 0 })
@@ -218,7 +219,6 @@ function grabTowerAPs(APs: Array<apEntry>, startTime: string, endTime: string, a
                     "mac": APs[i].mac,
                     "metrics": metrics
                 })
-
 
                 overallStats.push({
                     "tower": tower,
@@ -251,7 +251,6 @@ function congestion(metric: metricEntry[], saturationValue: number): number {
     return Number((metric.filter((d) => { return d.data >= saturationValue }).length / metric.length))
 }
 
-//TODO: Add ability to do less than 24 hours (jump from hours to minutes)
 //TODO: report should have a nice overview of stats with perhaps mini charts, subscribers, efficiency, perhaps show the worst ones "points of concern this week"
 
 function insertLinebreaks(d) {
@@ -283,6 +282,7 @@ function graph(ap: AP): Promise<string> {
             let max: number = 0
             let max2: number = 0
 
+            // Find the max of the various axis (and min for date)
             ap.metrics.forEach((metric) => {
                 if ((Number(d3.max(metric.values, (d) => { return d.data })) > max) && metric.axis == 0) { max = Number(d3.max(metric.values, (d) => { return d.data })) }
                 if ((Number(d3.max(metric.values, (d) => { return d.data })) > max2) && metric.axis == 1) { max2 = Number(d3.max(metric.values, (d) => { return d.data })) }
@@ -292,9 +292,9 @@ function graph(ap: AP): Promise<string> {
 
             if (max2 < 100) { max2 = 100 } // If subs are under 100 at least have it cover 100%
 
-            let y = d3.scaleLinear().rangeRound([height, 0]).nice().domain([0, max])
-            let y2 = d3.scaleLinear().rangeRound([height, 0]).nice().domain([0, max2])
-            let x = d3.scaleTime().rangeRound([0, width]).nice().domain([minDate, maxDate])
+            let y = d3.scaleLinear().rangeRound([height, 0]).nice().domain([0, max]) // Throughput scale
+            let y2 = d3.scaleLinear().rangeRound([height, 0]).nice().domain([0, max2]) // Sub scale
+            let x = d3.scaleTime().rangeRound([0, width]).nice().domain([minDate, maxDate]) // Date Scale
 
             let legendvals = d3.set(ap.metrics.filter((m) => { return (m.axis == 0) }).map((m) => { return m.name })).values()
             let legendOrdinal = d3.scaleOrdinal().domain(legendvals).range(color)
@@ -446,31 +446,50 @@ function graph(ap: AP): Promise<string> {
             })
 
             let axis = svgGraphArea.append('g')
+                .attr("id", "axis")
+                .attr("class", "axis")
+
             axis.append('g')
                 .attr("id", "main_x")
                 .attr("class", "x_axis")
+                .attr("transform", `translate(0, ${height})`)
                 .call(d3
                     .axisBottom(x)
                     .tickPadding(2)
+                    .tickSize(5)
+                    .tickSizeOuter(0)
                     .tickFormat((d: number) => {
-                        return require('moment')(new Date(d * 1000)).format("MM/DD h:mma")
+                        return moment(new Date(d * 1000)).format("MM/DD h:mma")
                     }))
-                .attr("transform", `translate(0, ${height})`)
+                .attr("fill", "#000")
+                
 
             axis.append('g')
+                .attr("id", "y2")
+                .attr("class", "y_axis")
+                .attr("transform", `translate(0, 0)`)
                 .call(d3
                     .axisLeft(y)
                     .ticks(7)
+                    .tickSize(5)
+                    .tickSizeOuter(0)
                     .tickFormat((d: number) => {
                         return getReadableFileSizeString(d * 1024)
                     }))
-                .attr("transform", `translate(0, 0)`)
+                .attr("fill", "#000")
+                
 
             axis.append('g')
+                .attr("id", "y2")
+                .attr("class", "y_axis")
+                .attr("transform", `translate(${width}, 0)`)
                 .call(d3
                     .axisRight(y2)
-                    .ticks(4))
-                .attr("transform", `translate(${width}, 0)`)
+                    .ticks(4)
+                    .tickSize(5)
+                    .tickSizeOuter(0))
+                .attr("fill", "#000")
+                
 
             let svgLegend = svgGraphArea.append('g')
             let svgLegendEntryLeft = svgLegend.selectAll('.legend')
@@ -528,8 +547,8 @@ function graph(ap: AP): Promise<string> {
                 .style("font-size", 10)
 
             svg.selectAll('#main_x g text').each(insertLinebreaks);
-
-            resolve(window.select('.container').html().toString())
+            
+            resolve(window.select('.container').html().toString());
         } catch (err) {
             console.log(err.message)
             reject(err.message)
