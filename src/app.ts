@@ -48,7 +48,7 @@ async function main() {
                 svgs[tower['id']].push(await graph(apResults[i]))
                 let svgTest = svgs[tower['id']][i];
             }
-            break; // BREAK AFTER FIRST AP FOR TESTING
+            //break; // BREAK AFTER FIRST AP FOR TESTING
         }
 
         await generateReport()
