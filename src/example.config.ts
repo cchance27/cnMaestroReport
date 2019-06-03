@@ -3,6 +3,7 @@ class Configuration {
     smtpPort = 25
 	sendMail = true
 	toEmailAddress = ["admin@yourdomain.com", "anotheradmin@yourdomain.com"]
+	fromEmail = "noreply@yourdomain.tld"
 	days = 7
 	clientid = 'generate-in-cnmaestro'
 	client_secret = 'generate-in-cnmaestro'
@@ -23,3 +24,4 @@ export const client_secret = config.client_secret;
 export const baseURL = config.baseURL;
 export const color = config.color;
 export const logoFile = config.logoFile;
+export const fromEmail = config.fromEmail;

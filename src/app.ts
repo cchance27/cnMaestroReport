@@ -5,7 +5,7 @@ import { AP, metric, metricEntry, apEntry, columns } from './classes'
 import PDFDocument from 'pdfkit'
 import SVGtoPDF from 'svg-to-pdfkit'
 import PdfTable from 'voilab-pdf-table'
-import {smtpHost, smtpPort, sendMail, toEmailAddress, days, clientid, client_secret, baseURL, color, logoFile} from './config'
+import {smtpHost, smtpPort, sendMail, toEmailAddress, days, clientid, client_secret, baseURL, color, logoFile, fromEmail} from './config'
 let moment = require('moment');
 
 const mailer = require('sendmail')({ smtpHost: smtpHost, smtpPort: smtpPort })
@@ -73,7 +73,7 @@ function sendEmail() {
         `
 
         mailer({
-            from: 'noreply@localhost.localdomain',
+            from: fromEmail,
             to: toEmailAddress,
             subject: `Canopy 450 Report (${moment(new Date(startTime)).format("MM/DD/YYYY")} - ${moment(new Date(endTime)).format("MM/DD/YYYY")})`,
             html: html,
