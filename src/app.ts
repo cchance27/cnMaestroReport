@@ -68,8 +68,6 @@ function sendEmail() {
         <br\>
         ${generateHTMLTable(overallStats, "Top 10 Subscriber Sessions", 10, true, "sessions", 0)}
         <br\>
-        ${generateHTMLTable(overallStats, "Bottom 10 Subscriber Sessions", 10, false, "sessions", -1)}
-        <br\>
         `
 
         mailer({
