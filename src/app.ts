@@ -40,7 +40,7 @@ async function main() {
             console.log(`Tower Grab: ${tower['id']}`)
             let APs: any = await getCNMapi(baseURL, `/devices/statistics?mode=ap&tower=${tower['id'].split(' ').join('+')}&fields=name,mac,radio.channel_width,radio.tdd_ratio`, accessToken)
             APs.sort(stringSort)
-
+            
             let apResults: Array<AP> = await grabTowerAPs(APs, startTime, endTime, accessToken, tower['name'])
             svgs[tower['id']] = []
             for (let i = 0; i < apResults.length; i++) {
@@ -171,7 +171,7 @@ function grabTowerAPs(APs: Array<apEntry>, startTime: string, endTime: string, a
 
                 console.log(`Grabbing AP: ${APs[i].mac}`)
                 let dayResults: any = await getCNMapi(baseURL, `/devices/${APs[i].mac}/performance?start_time=${startTime}&stop_time=${endTime}&fields=timestamp,radio.dl_throughput,radio.ul_throughput,radio.dl_frame_utilization,radio.ul_frame_utilization,sm_count,sm_drops`, accessToken)
-
+                let product: any = ((await getCNMapi(baseURL, `/devices/${APs[i].mac}?fields=product`, accessToken))[0] as any).product
                 let valueDL: Array<metricEntry> = []
                 let valueUL: Array<metricEntry> = []
                 let valueFRUL: Array<metricEntry> = []
@@ -219,6 +219,7 @@ function grabTowerAPs(APs: Array<apEntry>, startTime: string, endTime: string, a
                 apResults.push({
                     "name": APs[i].name,
                     "mac": APs[i].mac,
+                    "type": product,
                     "metrics": metrics
                 })
 
@@ -316,7 +317,7 @@ function graph(ap: AP): Promise<string> {
 
             let svgHeaders = svg.append('g')
             svgHeaders.append("text")
-                .text(ap.name)
+                .text(`${ap.name} (${ap.type})`)
                 .attr("transform", `translate(${fullWidth / 2}, 0)`)
                 .attr("dy", "1em")
                 .attr("text-anchor", "middle")

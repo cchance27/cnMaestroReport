@@ -3,6 +3,7 @@ import { getReadableFileSizeString } from "./myFunctions";
 export class AP {
     name: string
     mac: string
+    type: string
     metrics: Array<metric>
 }
 
