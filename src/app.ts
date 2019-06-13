@@ -187,17 +187,21 @@ function grabTowerAPs(APs: Array<apEntry>, startTime: string, endTime: string, a
                 let ULhz: number = APhz * (1 - DLframe)
 
                 dayResults.forEach((day) => {
-                    let timeStamp = Number(Date.parse(day.timestamp)) / 1000
-                    valueDL.push({ 'timestamp': timeStamp, 'data': day.radio.dl_throughput })
-                    valueUL.push({ 'timestamp': timeStamp, 'data': day.radio.ul_throughput })
-                    valueFRDL.push({ 'timestamp': timeStamp, 'data': day.radio.dl_frame_utilization })
-                    valueFRUL.push({ 'timestamp': timeStamp, 'data': day.radio.ul_frame_utilization })
-                    let bphDLclean = ((day.radio.dl_throughput / (day.radio.dl_frame_utilization / 100)) / DLhz) != Infinity ? ((day.radio.dl_throughput / (day.radio.dl_frame_utilization / 100)) / DLhz) : 0
-                    let bphULclean = ((day.radio.ul_throughput / (day.radio.ul_frame_utilization / 100)) / ULhz) != Infinity ? ((day.radio.ul_throughput / (day.radio.ul_frame_utilization / 100)) / ULhz) : 0
-                    bphDL.push({ 'timestamp': timeStamp, 'data': bphDLclean })
-                    bphUL.push({ 'timestamp': timeStamp, 'data': bphULclean })
-                    sessions.push({ 'timestamp': timeStamp, 'data': day.sm_count })
-                    sessionDrops.push({ 'timestamp': timeStamp, 'data': day.sm_drops })
+                    if (day.radio != null) {
+                        let timeStamp = Number(Date.parse(day.timestamp)) / 1000
+                        valueDL.push({ 'timestamp': timeStamp, 'data': day.radio.dl_throughput })
+                        valueUL.push({ 'timestamp': timeStamp, 'data': day.radio.ul_throughput })
+                        valueFRDL.push({ 'timestamp': timeStamp, 'data': day.radio.dl_frame_utilization })
+                        valueFRUL.push({ 'timestamp': timeStamp, 'data': day.radio.ul_frame_utilization })
+                        let bphDLclean = ((day.radio.dl_throughput / (day.radio.dl_frame_utilization / 100)) / DLhz) != Infinity ? ((day.radio.dl_throughput / (day.radio.dl_frame_utilization / 100)) / DLhz) : 0
+                        let bphULclean = ((day.radio.ul_throughput / (day.radio.ul_frame_utilization / 100)) / ULhz) != Infinity ? ((day.radio.ul_throughput / (day.radio.ul_frame_utilization / 100)) / ULhz) : 0
+                        bphDL.push({ 'timestamp': timeStamp, 'data': bphDLclean })
+                        bphUL.push({ 'timestamp': timeStamp, 'data': bphULclean })
+                        sessions.push({ 'timestamp': timeStamp, 'data': day.sm_count })
+                        sessionDrops.push({ 'timestamp': timeStamp, 'data': day.sm_drops })
+                    } else {
+                        console.warn("Timestamp failed to return a radio: " + day.timeStamp);
+                    }
                 })
 
                 //TODO: Look into grabbing 450m vs 450 and grabbing the other efficiency graphs when they add support for 450m MU-MIMO
