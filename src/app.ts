@@ -46,7 +46,6 @@ async function main() {
             for (let i = 0; i < apResults.length; i++) {
                 console.log(`Generate SVG: ${apResults[i].name}`)
                 svgs[tower['id']].push(await graph(apResults[i]))
-                let svgTest = svgs[tower['id']][i];
             }
             //break; // BREAK AFTER FIRST AP FOR TESTING
         }
@@ -129,7 +128,7 @@ function generateReport() {
                             console.log(`New Tower Page: ${svgTower}`)
                             doc.addPage()
                             //SVGtoPDF(doc, utslogo , (doc.page.width / 2) - 88, (doc.page.height / 3) - 100)
-                            doc.image('utslogo.PNG', (doc.page.width / 2) - 88, (doc.page.height / 3) - 100)
+                            doc.image(logoFile, (doc.page.width / 2) - 88, (doc.page.height / 3) - 100)
                             doc.fontSize('32')
                             doc.text(svgTower, 0, 0.4 * (doc.page.height - doc.heightOfString(svgTower, { width: doc.page.width, align: 'center' })), { width: doc.page.width, align: 'center' });
                             doc.text(" ")
@@ -157,6 +156,7 @@ function generateReport() {
             doc.end()
             resolve(true)
         } catch (err) {
+            console.log(err)
             reject(false)
         }
     })
