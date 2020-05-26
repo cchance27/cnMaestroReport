@@ -93,6 +93,7 @@ export const generateHTMLTable = function (data, title: string, topN: number, ma
         <tr>
             <td>Sector</td>
             <td>SMs</td>
+            <td>Type</td>
             <td>Downlink<br/>(Max)</td>
             <td>Uplink<br/>(Max)</td>
             <td>DL Utilization<br/>(Mean)</td>
@@ -108,6 +109,7 @@ export const generateHTMLTable = function (data, title: string, topN: number, ma
             <tr>
                 <td>${filtered[i].name}</td>
                 <td>${Number(filtered[i].sessions).toFixed(0)}</td>
+                <td>${filtered[i].type}</td>
                 <td>${getReadableFileSizeString(filtered[i].DLmax)}</td>
                 <td>${getReadableFileSizeString(filtered[i].ULmax)}</td>
                 <td>${Number(filtered[i].meanUtilDL).toFixed(1)}%</td>

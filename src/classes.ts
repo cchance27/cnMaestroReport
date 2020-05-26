@@ -42,6 +42,9 @@ export const columns = [
         }
     },
     {
+        id: 'type', header: 'Type', align: 'left', width: 30
+    },
+    {
         id: 'DLmax', header: 'Downlink\n(max)', align: 'center', width: 60, cache: false, renderer: function (tb, data, draw) {
             if (draw) { tb.pdf.fillColor('black'); return getReadableFileSizeString(data.DLmax) }
             return ``
@@ -96,7 +99,7 @@ export const columns = [
         }
     },
     {
-        id: 'congestDL', header: 'DL Congest\n(hour %)', align: 'center', width: 60, cache: false, renderer: function (tb, data, draw) {
+        id: 'congestDL', header: 'DL Congest\n(hour %)', align: 'center', width: 50, cache: false, renderer: function (tb, data, draw) {
             if (draw) {
                 if (!data.congestDL) data.congestDL = 0
                 if (data.congestDL > 20) { tb.pdf.fillColor("#ff0000") } else if (data.congestDL > 0) { tb.pdf.fillColor("#ff9900") } else { tb.pdf.fillColor("#000000") }
@@ -106,7 +109,7 @@ export const columns = [
         }
     },
     {
-        id: 'congestUL', header: 'UL Congest\n(hour %)', align: 'center', width: 60, cache: false, renderer: function (tb, data, draw) {
+        id: 'congestUL', header: 'UL Congest\n(hour %)', align: 'center', width: 50, cache: false, renderer: function (tb, data, draw) {
             if (draw) {
                 if (!data.congestUL) data.congestUL = 0
                 if (data.congestUL > 20) { tb.pdf.fillColor("#ff0000") } else if (data.congestUL > 0) { tb.pdf.fillColor("#ff9900") } else { tb.pdf.fillColor("#000000") }
