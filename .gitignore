@@ -35,4 +35,4 @@ src/config.ts
 reports/
 *.jpg
 package-lock.json
-*-cache.json
+*cache.json
