@@ -10,6 +10,7 @@ class Configuration {
 	baseURL = 'https://cnmaestro.localdomain/api/v1'
 	color = ["#a1bcce", "#c67377", "#449bd6", "#ad4045", "#001dff", "#a01118", "#14ce00", "#d2e2d0"]
 	logoFile = "LogoImageToUseInRootFolder.png"
+	debug = false
 }
 
 const config = new Configuration();
@@ -25,3 +26,4 @@ export const baseURL = config.baseURL;
 export const color = config.color;
 export const logoFile = config.logoFile;
 export const fromEmail = config.fromEmail;
+export const debug = config.debug;

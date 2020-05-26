@@ -6,7 +6,7 @@ import { AP, metric, metricEntry, apEntry, columns } from './classes'
 import PDFDocument from 'pdfkit'
 import SVGtoPDF from 'svg-to-pdfkit'
 import PdfTable from 'voilab-pdf-table'
-import {smtpHost, smtpPort, sendMail, toEmailAddress, days, clientid, client_secret, baseURL, color, logoFile, fromEmail} from './config'
+import {smtpHost, smtpPort, sendMail, toEmailAddress, days, clientid, client_secret, baseURL, color, logoFile, fromEmail, debug} from './config'
 let moment = require('moment');
 
 const mailer = require('sendmail')({ smtpHost: smtpHost, smtpPort: smtpPort })
@@ -51,7 +51,7 @@ async function main() {
                     console.log(`Generate SVG: ${apResults[i].name}`)
                     svgs[tower['id']].push(await graph(apResults[i]))
                 }
-                break; // BREAK AFTER FIRST AP FOR TESTING
+                if(debug) { break; }// BREAK AFTER FIRST AP FOR TESTING
             }
 
             let cache = {svgs: svgs, overallStats: overallStats}
