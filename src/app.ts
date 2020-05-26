@@ -1,5 +1,6 @@
 import { getReadableFileSizeString, loginCNMaestro, getCNMapi, generateHTMLTable } from './myFunctions'
 import * as d3 from 'd3'
+import * as fs from 'fs'
 import { JSDOM } from 'jsdom'
 import { AP, metric, metricEntry, apEntry, columns } from './classes'
 import PDFDocument from 'pdfkit'
@@ -14,9 +15,11 @@ let overallStats = []
 let svgs = {}
 const end = Math.round((new Date()).getTime() / 1000)
 const start = end - (days * (24 * 3600))
-let startTime = new Date(start * 1000).toISOString()
-let endTime = new Date(end * 1000).toISOString()
-let filename = `cnMaestroReport ${moment(new Date(startTime)).format("YYYY-MM-DD")}.pdf`;;
+const startTime = new Date(start * 1000).toISOString()
+const endTime = new Date(end * 1000).toISOString()
+const fileDate = moment(new Date(startTime)).format("YYYY-MM-DD")
+const filename = `${fileDate}-cnMaestroReport.pdf`
+const cachefile = `${fileDate}-cache.json`
 
 const writer = require('fs').createWriteStream(filename)
 writer.on('finish', () => sendEmail())
@@ -30,28 +33,44 @@ function stringSort(a, b) {
 }
 
 async function main() {
-    const accessToken = await loginCNMaestro(clientid, client_secret, baseURL)
+    if(!fs.existsSync(cachefile)) {
+        const accessToken = await loginCNMaestro(clientid, client_secret, baseURL)
 
-    if (accessToken) {
-        let towers = await getCNMapi(baseURL, `/networks/default/towers?fields=id,name`, accessToken)
-        towers = towers.sort(stringSort)
+        if (accessToken) {
+            let towers = await getCNMapi(baseURL, `/networks/default/towers?fields=id,name`, accessToken)
+            towers = towers.sort(stringSort)
 
-        for (let tower of towers) {
-            console.log(`Tower Grab: ${tower['id']}`)
-            let APs: any = await getCNMapi(baseURL, `/devices/statistics?mode=ap&tower=${tower['id'].split(' ').join('+')}&fields=name,mac,radio.channel_width,radio.tdd_ratio`, accessToken)
-            APs.sort(stringSort)
-            
-            let apResults: Array<AP> = await grabTowerAPs(APs, startTime, endTime, accessToken, tower['name'])
-            svgs[tower['id']] = []
-            for (let i = 0; i < apResults.length; i++) {
-                console.log(`Generate SVG: ${apResults[i].name}`)
-                svgs[tower['id']].push(await graph(apResults[i]))
+            for (let tower of towers) {
+                console.log(`Tower Grab: ${tower['id']}`)
+                let APs: any = await getCNMapi(baseURL, `/devices/statistics?mode=ap&tower=${tower['id'].split(' ').join('+')}&fields=name,mac,radio.channel_width,radio.tdd_ratio`, accessToken)
+                APs.sort(stringSort)
+
+                let apResults: Array<AP> = await grabTowerAPs(APs, startTime, endTime, accessToken, tower['name'])
+                svgs[tower['id']] = []
+                for (let i = 0; i < apResults.length; i++) {
+                    console.log(`Generate SVG: ${apResults[i].name}`)
+                    svgs[tower['id']].push(await graph(apResults[i]))
+                }
+                break; // BREAK AFTER FIRST AP FOR TESTING
             }
-            //break; // BREAK AFTER FIRST AP FOR TESTING
-        }
 
-        await generateReport()
+            let cache = {svgs: svgs, overallStats: overallStats}
+            console.log(`Caching: ${cachefile}`)
+            fs.writeFileSync(cachefile, JSON.stringify(cache), 'utf8')
+        } else {
+            throw "Access Token Failure";
+        }
+    } else {
+        // We have a cache file for today.abs
+        let cacheResult = fs.readFileSync(cachefile, 'utf8')
+        console.log(`Cache Restored: ${cachefile}`)
+        let loadedCache = JSON.parse(cacheResult)
+        overallStats = loadedCache.overallStats
+        svgs = loadedCache.svgs
     }
+
+    await generateReport()
+    
 }
 
 function sendEmail() {
@@ -225,6 +244,7 @@ function grabTowerAPs(APs: Array<apEntry>, startTime: string, endTime: string, a
 
                 overallStats.push({
                     "tower": tower,
+                    "type" : product.split(' ')[1],
                     "name": APs[i].name,
                     "bphDLmax": d3.max(bphDL, (d) => { return d.data }),
                     "bphDLmean": d3.mean(bphDL, (d) => { return d.data }),
