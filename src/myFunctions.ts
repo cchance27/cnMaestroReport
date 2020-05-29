@@ -1,4 +1,26 @@
-import axios from 'axios'
+import fetch from 'node-fetch'
+
+export const stringSort = function (a: string, b: string) {
+    if (a==null) {return -1}
+    if (b==null) {return 1}
+    var x = a.toLowerCase();
+    var y = b.toLowerCase();
+    if (x < y) { return -1 }
+    if (x > y) { return 1 }
+    return 0
+}
+
+export const EncodeXMLEscapeChars = function (input: string) {
+    return input.replace(/&/g, '&amp;')
+               .replace(/</g, '&lt;')
+               .replace(/>/g, '&gt;')
+               .replace(/"/g, '&quot;')
+               .replace(/'/g, '&apos;');
+};
+
+export const formatNumber = function (num) {
+    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+}
 
 export const getContent = function (url: string) {
     // return new pending promise
@@ -40,45 +62,53 @@ export const loginCNMaestro = async function (clientid: string, client_secret: s
     let encodedAuth = Buffer.from(`${clientid}:${client_secret}`).toString('base64')
     require('https').globalAgent.options.rejectUnauthorized = false
 
-    try {
-        let login = await axios.post(`${baseURL}/access/token`, body, { headers: { 'Authorization': `Basic ${encodedAuth}`, 'Content-Type': 'application/x-www-form-urlencoded' } })
-        return login.data.access_token
-    } catch (err) {
-        console.log(err.message)
-        return err
-    }
+    let login = await fetch(`${baseURL}/access/token`, {
+        method: "post",
+        headers: {
+            'Authorization': `Basic ${encodedAuth}`, 'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: body
+    })
+    let resp = await login.json()
+    return resp.access_token
 }
 
 export async function getCNMapi(baseURL: string, apiPath: string, accessToken: string, getAll: boolean = true) {
-    try {
-        axios.defaults.headers.common['Authorization'] = 'Bearer ' + accessToken
-        let res = await axios.get(baseURL + apiPath)
-        let values: Array<{}> = res.data.data
-
-        // Temporary workaround for the paging issue for performance on 2.2.0r60
-        let workaround = false;
-        if ((res.data.paging.total == res.data.paging.limit) && apiPath.includes("performance")) { workaround = true; } // We got a full 100 results so, let's ask for more.
-
-        // Check if we need to get more
-        if (getAll && (((res.data.paging.limit + res.data.paging.offset) < res.data.paging.total) || workaround)) {
-            let offsetText = "?offset="
-            if (apiPath.includes("?")) { offsetText = "&offset=" }
-            
-            while (((res.data.paging.limit + res.data.paging.offset) < res.data.paging.total) || workaround) {
-                workaround = false
-                res = await axios.get(baseURL + apiPath + offsetText + (res.data.paging.limit + res.data.paging.offset))
-                values = values.concat(res.data.data)
-
-                // Temporary workaround for the paging issue for performance on 2.2.0r60
-                if ((res.data.paging.total == res.data.paging.limit) && apiPath.includes("performance")) { workaround = true; }
-            }
+    let firstUrl = (baseURL + apiPath)
+    let response = await fetch(firstUrl, {
+        method: "get",
+        headers: {
+            'Authorization': 'Bearer ' + accessToken
         }
+    })
 
-        return values
+    let res = await response.json();
+    let values: Array<{}> = res.data
+
+    let offset = 0 // Manually using an offset as had issues with API always returning paging.offset = 0
+    //console.log(`First: ${firstUrl} Limit: ${res.paging.limit} Offset: ${offset} Total: ${res.paging.total}`)
+
+    // Check if we need to get more
+    if (getAll && (((res.paging.limit + offset) < res.paging.total))) {
+        let offsetText = "?offset="
+        if (apiPath.includes("?")) { offsetText = "&offset=" }
+        
+        while (((res.paging.limit + offset) < res.paging.total)) {
+            offset+=res.paging.limit
+            let pagedUrl = (baseURL + apiPath + offsetText + offset)
+            response = await fetch(pagedUrl, {
+                method: "get",
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            })
+            res = await response.json()
+            values = values.concat(res.data)
+            //console.log(`Paged: ${pagedUrl} Limit: ${res.paging.limit} Offset: ${offset} Total: ${res.paging.total}`)
+        }
     }
-    catch (err) {
-        console.log(err.message, err.response.data.error.message)
-    }
+
+    return values
 }
 
 export const generateHTMLTable = function (data, title: string, topN: number, maxTop: boolean, field: string, minValue: number): string {
