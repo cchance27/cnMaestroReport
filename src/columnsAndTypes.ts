@@ -6,7 +6,7 @@ export class metricEntry {
 }
 
 export const columns = [
-    { id: 'name', header: 'Sector', align: 'left', width: 70 },
+    { id: 'name', header: 'Sector', align: 'left', width: 60 },
     {
         id: 'sessions', header: 'SMs', align: 'center', width: 35, cache: false, renderer: function (tb, data, draw) {
             if (draw) {
@@ -17,7 +17,7 @@ export const columns = [
         }
     },
     {
-        id: 'type', header: 'Type', align: 'left', width: 20
+        id: 'type', header: 'Type', align: 'left', width: 30
     },
     {
         id: 'DLmax', header: 'Downlink\n(max)', align: 'center', width: 60, cache: false, renderer: function (tb, data, draw) {
