@@ -1,6 +1,6 @@
 import { getCachedCnMaestro } from "./caching"
 import { apiStatistics, apiPerformance, apiTower, apiSmStatistics } from "./cnMaestroTypes"
-import { debug } from "./config"
+import { debug, debugAmount } from "./config"
 
 export async function getAllTowers(accessToken: string) {
     return getCachedCnMaestro('towers', accessToken, '/networks/default/towers')
@@ -45,7 +45,7 @@ export async function getAllApPerformance(towerApStatistics: Map<string, apiStat
                 apPerformance.set(apStat.name, perf)
             })
         )
-        if (debug) { break; }
+        if (debug && apPerformance.keys.length == debugAmount) { break; } // Only grab debugAmount of towers
      }
 
      return apPerformance
@@ -57,11 +57,10 @@ export async function getAllApProductTypes(towerApStatistics: Map<string, apiSta
     for(let tower of towerApStatistics) {
         await Promise.all(
             tower[1].map(async apStat => {
-                let product = await getCachedCnMaestro(`${apStat.mac}-product`, accessToken, `/devices/${apStat.mac}?fields=product`)
+                let product = await getCachedCnMaestro(`${apStat.mac}-product`, accessToken, `/devices/${apStat.mac}?fields=product`, false) // We don't need to refresh this as the mac->productType dont change
                 apProduct.set(apStat.name, product[0].product)
             })
         )      
-        if (debug) { break; }
     }
 
     return apProduct
