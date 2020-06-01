@@ -17,7 +17,9 @@ class Configuration {
     eipPassword = "owner-password"
     eipWsdlUrl = "http://engageip.url/Adminportal/webservice.asmx"
 	debug = false
+	debugAmount = 2
 }
+
 const config = new Configuration();
 
 const end = moment().startOf('d'); // End beginning of today
@@ -32,6 +34,7 @@ export const endTime = end.toISOString()
 
 // Tag single day runs as the start date, tag multi day as start_end
 export const fileDateTag = reportHours <= 24  ? fileStartDate : `${fileStartDate}_${fileEndDate}`
+
 export const eipUsername = config.eipUsername
 export const eipPassword = config.eipPassword
 export const eipWsdlUrl = config.eipWsdlUrl
@@ -48,3 +51,4 @@ export const color2 = config.color2;
 export const logoFile = config.logoFile;
 export const fromEmail = config.fromEmail;
 export const debug = config.debug;
+export const debugAmount = config.debugAmount;

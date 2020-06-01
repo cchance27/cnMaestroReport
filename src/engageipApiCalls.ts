@@ -1,4 +1,4 @@
-import { eipUsername, eipPassword, eipWsdlUrl, debug } from './config'
+import { eipUsername, eipPassword, eipWsdlUrl, debug, debugAmount } from './config'
 import { apiSmStatistics } from './cnMaestroTypes'
 import { getCachedEipSm } from './caching'
 import fetch from 'node-fetch'
@@ -32,21 +32,26 @@ export function findEsnInPackages(ViewUserPackageWithServices: any, ESN: string)
     return thePackage[0]
 }
 
-export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStatistics[]>) {
-    let allSmPackageDetails: {} = {}
+export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStatistics[]>): Promise<{package: string, sku: string, amount: number}> {
+    let allSmPackageDetails = {}
 
+    let towerCount = 0
     // Loop through all SMs
     for(let tower of allSmStatistics) {
-        console.log(`Getting EIP details for Clients on ${tower[0]}`)
+        console.log(`Getting EIP details for Clients on ${tower[0]} [${towerCount+1}/${allSmStatistics.size}]`)
 
+        let smCount = 0
         for(let sm of tower[1]){
+            console.log(`Getting EIP Client MAC: ${sm.mac} [${smCount+1}/${tower[1].length}]`)
             allSmPackageDetails[sm.mac] = await getCachedEipSm(sm)
+            smCount++
         }
-        
-        if (debug) { break; }
+
+        if (debug && towerCount == debugAmount) { break; } // Break if we got debugAmount of Towers
+        towerCount++
     }
 
-    return allSmPackageDetails
+    return (allSmPackageDetails as ({package: string, sku: string, amount: number}))
 
 }
 

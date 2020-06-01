@@ -1,12 +1,13 @@
-import { getReadableFileSizeString } from './myFunctions';
+import { getReadableFileSizeString, stringSort, formatNumber } from './myFunctions';
 import { JSDOM } from 'jsdom';
 import { metricEntry } from './columnsAndTypes';
 import { color, color2 } from './config';
 import * as d3 from 'd3'
-import { apiPerformance, apiStatistics } from './cnMaestroTypes';
+import { apiPerformance, apiStatistics, apiSmStatistics } from './cnMaestroTypes';
 import { getMetric } from './cnMaestroMetricTools';
 import { perfToBpHz } from './bitsPerHz';
 import { calcCongestion } from './congestion';
+import { schemeCategory10 } from 'd3';
 
 let moment = require('moment');
 
@@ -21,8 +22,135 @@ export function insertLinebreaks(d) {
         if (i > 0)
             tspan.attr('x', 0).attr('dy', '10');
     }
-};
+}
 
+export function stackedBarChart(data, widthVar: number, heightVar: number, valueDollars: boolean = true) {
+    console.log(`New StackedBar Chart`)
+    // [{Name: number, total: number , ...Columns...: number}
+
+    const format = valueDollars ? d3.format("$,") : d3.format(",")
+    const margin = {top: 20, right: 50, bottom: 30, left: 120},
+    width = widthVar - margin.left - margin.right,
+    height = heightVar - margin.top - margin.bottom
+
+    const window = d3.select((new JSDOM(`<html><head></head><body></body></html>`)).window.document)
+    let svg = window.select('body').append('div').attr('class', 'container').append("svg").attr("width", widthVar).attr("height", heightVar).append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.bottom + ")")
+    
+    data.sort((a, b) => b.total - a.total)
+
+    let y = d3.scaleBand().rangeRound([0, height-20]).paddingInner(0.05).align(0.1).domain(data.map(d => d.name))
+    let x = d3.scaleLinear().rangeRound([0, width]).domain([0, Number(d3.max(data, d => (d as any).total))]).nice()
+    let keys = Object.keys(data[0]).filter(d => d != 'total' && d != 'name') // skip name and total
+    let z = d3.scaleOrdinal(schemeCategory10).domain(keys)
+
+    svg.append("g").selectAll("g")
+        .data(d3.stack().keys(keys)(data))
+        .enter().append("g")
+        .attr("fill", d => z(d.key))
+        .selectAll("rect")
+        .data(d => d).enter()
+        .append("rect")
+            .attr("y", d => y((d as any).data.name)).attr("x", d => x(d[0]))			   
+            .attr("width", d => x(d[1]) - x(d[0])).attr("height", y.bandwidth()-10)
+
+    // Totals on end of bar
+    svg.append("g").selectAll("text")
+        .data(data).enter().append("text")
+        .text((d, i) => format((d as any).total))
+        .attr("y", (d, i) => y((d as any).name) + y.bandwidth()/2).attr("x", (d, i) =>  x((d as any).total) + 5)
+        .attr("font-family", "sans-serif").attr("font-size", 12).attr("fill", "#000").attr("font-weight", "normal")
+
+    // Left Axis
+    svg.append("g").attr("class", "axis")
+        .attr("transform", "translate(0,0)")
+        .call(d3.axisLeft(y).tickSizeOuter(0)).attr("font-family", "sans-serif")
+        .attr("font-family", "sans-serif").attr("font-size", 12).attr("fill", "#000").attr("font-weight", "normal")							
+
+    // Bottom Axis
+    svg.append("g").attr("class", "axis")
+        .attr("transform", "translate(0,"+height+")")				
+        .call(d3.axisBottom(x).tickFormat(v => format(v)).tickSizeOuter(0))
+        .attr("font-family", "sans-serif").attr("font-size", 12).attr("fill", "#000").attr("font-weight", "normal")	
+
+    // Legend
+    let legend = svg.append("g")
+        .attr("font-family", "sans-serif").attr("font-size", 10).attr("text-anchor", "end")
+        .selectAll("g").data(keys.slice().reverse()).enter()
+            .append("g")
+            .attr("transform", (d, i) => "translate(0," + ((height-(keys.length*16  )) + (i * 15)) + ")")
+
+    legend.append("rect").attr("x", width - 9).attr("width", 10).attr("height", 10).attr("fill", z)
+    legend.append("text").attr("x", width - 12).attr("y", 4.5).attr("dy", "0.32em").text(d => (d as any))
+
+    return window.select('.container').html().toString()
+}
+
+export function donutChart(data, diameter: number, valueDollars: boolean = true) {
+    console.log(`New Donut Chart`)
+
+    const format = valueDollars ? d3.format("$,") : d3.format(",")
+    const color = d3.scaleOrdinal(d3.schemeCategory10)
+    const window = d3.select((new JSDOM(`<html><head></head><body></body></html>`)).window.document)
+    const radius = diameter/2
+    
+    let svg = window.select('body').append('div').attr('class', 'container').append("svg").attr("width", diameter).attr("height", diameter)
+
+    let g = svg.append("g").attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
+
+    let pie = d3.pie().sort(null).value(d => (d as any).value);
+    
+    let path = d3.arc().outerRadius(radius - 10).innerRadius(radius - 120);
+    let label = d3.arc().outerRadius(radius - 80).innerRadius(radius - 80);
+
+    let arc = g.selectAll(".arc")
+        .data(pie(data)).enter()
+        .append("g").attr("class", "arc")
+
+    arc.append("path")
+        .attr("d", path as any)
+        .attr("fill", d => color((d as any).data.name))
+
+    arc.append("text")
+        .attr("transform", d => "translate(" + label.centroid((d as any)) + ")")
+        .style("font-size", 12).attr('font-family', 'Calibri').attr("dy", "-0.3em").style("text-anchor", "middle")
+        .text(d => (d as any).data.name)
+    
+    arc.append("text")
+        .attr("transform", d => "translate(" + label.centroid((d as any)) + ")")
+        .style("font-size", 10).attr('font-family', 'Calibri').attr("dy", "1.2em").style("text-anchor", "middle")
+        .text(d => `${format((d as any).data.value)}`)
+        
+    return window.select('.container').html().toString()
+}
+
+
+export function bubbleChart(inputData, diameter: number, valueDollars: boolean = true) {
+    console.log(`New Bubble Chart`)
+    const format = valueDollars ? d3.format("$,") : d3.format(",")
+    const color = d3.scaleOrdinal(d3.schemeCategory10)
+    const window = d3.select((new JSDOM(`<html><head></head><body></body></html>`)).window.document)
+
+    let bubble = d3.pack().size([diameter, diameter]).padding(1.5)
+    let svg = window.select('body').append('div').attr('class', 'container').append("svg").attr("width", diameter).attr("height", diameter).attr("class", "bubble")
+
+    let data = {"children" : inputData}
+
+    let root = d3.hierarchy(data).sum(d => (d as any).value).sort((a, b) => b.value - a.value)
+
+    bubble(root)
+
+    var node = svg.selectAll(".node")
+      .data(root.children).enter().append("g").attr("class", "node")
+      .attr("transform", d => "translate(" + (d as any).x + "," + (d as any).y + ")")
+
+    //node.append("title").text(d => (d as any).data.className + ": " + format(d.value))
+    node.append("circle").attr("r", d => (d as any).r).style("fill", d => color((d as any).data.packageName))
+    node.append("text").style("font-size", 12).attr('font-family', 'Calibri').attr("dy", "-0.3em").style("text-anchor", "middle").text(d => (d as any).data.packageName)
+    node.append("text").style("font-size", 12).attr('font-family', 'Calibri').attr("dy", "1.2em").style("text-anchor", "middle").text(d => format((d as any).data.value))
+
+    return window.select('.container').html().toString()
+}
 
 export function availChart(apPerfs: apiPerformance[], metricName: string, metricTrigger: number, header: boolean, width: number) {
     console.log(`New Availability Chart: ${apPerfs[0].name} - ${metricName}`)
@@ -38,8 +166,7 @@ export function availChart(apPerfs: apiPerformance[], metricName: string, metric
 
     if (!header) { yOffset = 0 }
     let svg = window.select('body').append('div').attr('class', 'container').append("svg").attr('font-family', 'Calibri')
-    .attr("width", `${width}px`)
-    .attr("height", `${yOffset + blockHeight}px`)
+    .attr("width", `${width}px`).attr("height", `${yOffset + blockHeight}px`)
 
     // Draw our rectangles for the time usage
     let rects = svg.append("g")
@@ -49,13 +176,7 @@ export function availChart(apPerfs: apiPerformance[], metricName: string, metric
         .attr("y", yOffset)
         .attr("x", d => scale(d[0]) + nameWidth) 
         .attr("height", blockHeight)
-        .attr("width", (d, i) => {
-            if (dataset[i + 1]) {
-                return scale(dataset[i + 1][0]) - scale(d[0])
-            } else {
-                return 0
-            }
-        })
+        .attr("width", (d, i) => (dataset[i + 1]) ? scale(dataset[i + 1][0]) - scale(d[0]) : 0)
         .attr("fill", d => d[1] ? "red" : "lightgreen")
         .style("stroke", "black")
         .style("stroke-width", "1px");
@@ -75,9 +196,7 @@ export function availChart(apPerfs: apiPerformance[], metricName: string, metric
                 .tickPadding(5)
                 .tickSize(5)
                 .tickSizeOuter(0)
-                .tickFormat((d: number) => {
-                    return moment.unix(d).format("MM/DD HH:mm");
-                }))
+                .tickFormat((d: number) => moment.unix(d).format("MM/DD HH:mm")))
             .selectAll("text")
             .attr("fill", "#000")
             .attr("transform", "translate(-10, 0) rotate(35)")
@@ -105,7 +224,6 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
         // Skip the kbit metrics for data usage
         if (metric.indexOf("kbit") == -1) {         
             let thisMetric = getMetric(apPerfs, metric)
-
             // Check this metric if it's the largest value
             // UL Throughput and DL Throughput get put on axix 0
             if ((Number(d3.max(thisMetric, (d) => d.value)) > max) && metric.indexOf("throughput") > -1) {
@@ -117,7 +235,7 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
             if ((Number(d3.max(thisMetric, (d) => d.value)) > max2) && metric.indexOf("throughput") == -1) {
                 max2 = Number(d3.max(thisMetric, (d) => d.value));
             }
-
+            
             // Find the minimum and maximum timestamps across all metrics
             if (Number(d3.min(thisMetric, (d) => d.timestamp)) < minDate) {
                 minDate = Number(d3.min(thisMetric, (d) => d.timestamp));
@@ -128,9 +246,7 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
         }
     })
 
-    if (max2 < 100) {
-        max2 = 100;
-    } // If subs are under 100 at least have it cover 100%
+    max2 = max2 < 100 ? max2 = 100 : max2 // If subs are under 100 at least have it cover 100%
     
     let y = d3.scaleLinear().rangeRound([height, 0]).nice().domain([0, max]) // Throughput scale
     let y2 = d3.scaleLinear().rangeRound([height, 0]).nice().domain([0, max2]) // Sub scale
@@ -209,7 +325,7 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
         .text(`Session Drops (max): ${(subDropm)}`)
         .attr("transform", `translate(${(fullWidth / 4) * 3 + 30}, ${fullHeight - 4})`).attr("fill", "#000").attr("text-anchor", "start").style("font-size", 12);
 
-    let svgGraphArea = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`);
+    let svgGraphArea = svg.append('g').attr('transform', `translate(${margin.left}, 0)`);
     let dataPlots = svgGraphArea.append('g');
 
     // Draw lines and areas to the map

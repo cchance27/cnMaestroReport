@@ -12,7 +12,7 @@ import { fileDateTag } from '../config';
 import { addPdfHeading } from "../pdfFunctions";
 import { formatNumber } from '../myFunctions';
 
-export async function generateFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages) {
+export async function generateFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>) {
     let pdfSVGMargin: number = 35;
     let pdfSVGloc: Array<Number> = [40, 290, 550];
 
@@ -26,7 +26,8 @@ export async function generateFullTechReport(allApPerformance: Map<string, apiPe
 
     let congestionValue = 90; // 90% usage or more is congested
     
-    const writer = require('fs').createWriteStream(`${fileDateTag} - cnMaestro Tech Report.pdf`);
+    const file = `${fileDateTag} - cnMaestro Tech Report.pdf`
+    const writer = require('fs').createWriteStream(file)
     doc.font('DaxOT.ttf');
     doc.pipe(writer);
 
@@ -48,9 +49,9 @@ export async function generateFullTechReport(allApPerformance: Map<string, apiPe
     doc = addPdfHeading("Uplink Congestion Overview", "Sectors with over 20% of uplink hours congested", doc, true);
     let congestUL = perfToTableData(new Map([...allApPerformance].filter(([k, v]) => isCongested(getMetric(v, "ul_frame_utilization"), congestionValue, 0.2))), allApStatistics, allApProductTypes);
     table.addBody(congestUL.filter((a) => a.congestUL > 20).sort((a, b) => (a.congestUL - b.congestUL)).reverse());
-    let svgs = {};
 
     // Generate SVGs for Available Towers->APs
+    let svgs = {};
     towers.forEach(tower => {
         svgs[tower.name] = [];
         let thisTowerAps: Map<string, apiPerformance[]> = new Map([...allApPerformance].filter(([k, v]) => v[0].tower == tower.name && v[0].radio));
@@ -61,16 +62,10 @@ export async function generateFullTechReport(allApPerformance: Map<string, apiPe
     let svgPosition: number = 0;
     let thisSVGPosition: number = 0;
     for (let svgTower in svgs) {
-        // Loop through towers
         for (let svg in svgs[svgTower]) {
-            // Loop through svg's for this tower
+            // This is a new Tower so we need a new site page with table.
             if (svgPosition == 0) {
 
-                let totalValue = allSmStatistics.get(svgTower)
-                    .reduce((agg, sm) => {
-                        // If EIP for some reason isn't returning a value we need to skip that one (just count it as 0$)
-                        return (allSmPackages[sm.mac]) ? Number(allSmPackages[sm.mac].amount) + agg : agg
-                    }, 0)
                                     // New Tower (So make a table frontpage)
                 console.log(`New Tower Page: ${svgTower}`)
                 doc.addPage()
@@ -78,15 +73,13 @@ export async function generateFullTechReport(allApPerformance: Map<string, apiPe
                 doc.fontSize('32')
                 doc.text(svgTower, 0, 0.4 * (doc.page.height - doc.heightOfString(svgTower, { width: doc.page.width, align: 'center' })), { width: doc.page.width, align: 'center' })
                 doc.text(" ")
-                doc.fontSize('12')
-                doc.text(`Total Revenue: $${formatNumber(totalValue.toFixed(2))}/month`, { align: 'center' })
-                doc.text(" ")
                 doc.fontSize('8')
                 let towerPanels = perfToTableData(new Map([...allApPerformance].filter(([k, v]) => v[0].tower == svgTower)), allApStatistics, allApProductTypes);
                 table.addBody(towerPanels)
             }
+
+            // This is a new page so we need a title at the top
             if (svgPosition % 3 == 0) {
-                // New page but not a first page.
                 console.log(`New SVG Page`);
                 doc.addPage();
                 doc.fillColor('lightgrey');
@@ -95,6 +88,8 @@ export async function generateFullTechReport(allApPerformance: Map<string, apiPe
                 doc.text(fileStartDate, 500, 15);
                 thisSVGPosition = 0;
             }
+
+            // Add SVG
             console.log(`Adding SVG: ${svgTower} - ${svg} - ${pdfSVGloc[thisSVGPosition]}`);
             SVGtoPDF(doc, svgs[svgTower][svg], pdfSVGMargin, pdfSVGloc[thisSVGPosition]);
             svgPosition += 1;
@@ -102,5 +97,6 @@ export async function generateFullTechReport(allApPerformance: Map<string, apiPe
         }
         svgPosition = 0;
     }
-    doc.end();
+    doc.end()
+    return file
 }

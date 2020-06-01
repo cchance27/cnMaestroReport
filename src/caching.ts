@@ -3,16 +3,32 @@ import { getCNMapi, stringSort } from './myFunctions'
 import * as fs from 'fs'
 import { findEsnInPackages, getEipApiToObject } from './engageipApiCalls'
 import { apiSmStatistics } from './cnMaestroTypes'
+const moment = require('moment')
 
-export async function getCachedCnMaestro(objectName: string, accessToken: string, apiUrl: string, cacheDir: string = "cache") {
+export function deleteOldCache(cacheDir: string = "cache") {
+    // Create cache directory if it doesn't exist, and return because if it didn't exist theirs nothing to remove.
+    if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir); return; }
+
+    // Files are tagged as some date to yesterday, and for single date as yesterday, 
+    // so an old file would be one with the day before yesterday in it not yesterday
+    let oldDate = moment().subtract(2, 'd').format("YYYY-MM-DD")
+    let oldDateFiles = fs.readdirSync(cacheDir).filter(f => f.indexOf(oldDate) > -1)
+
+    if (oldDateFiles.length > 0) {
+        console.log(`Removing Old Cache *${oldDate}*`)
+    }
+    
+    oldDateFiles.map(f => fs.unlinkSync(`${cacheDir}/${f}`))
+}
+
+export async function getCachedCnMaestro(objectName: string, accessToken: string, apiUrl: string, dateBasedCache: boolean = true, cacheDir: string = "cache") {
     // Create cache directory if it doesn't exist
     if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir) }
-    
+
     // Cleanup mac addresses for file name
     objectName = objectName.split(":").join('')
 
-    let cacheFile = `${cacheDir}/${fileDateTag} - ${objectName}-cache.json`
-
+    let cacheFile = dateBasedCache ? `${cacheDir}/${fileDateTag} - ${objectName}.cache` : `${cacheDir}/${objectName}.cache`
     if (fs.existsSync(cacheFile)) {
         console.log(`Cache Restored: ${cacheFile}`)
         return JSON.parse(fs.readFileSync(cacheFile, 'utf8'))
@@ -27,7 +43,7 @@ export async function getCachedCnMaestro(objectName: string, accessToken: string
     }
 }
 
-export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "cache") {
+export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "cache"): Promise<{package: string, sku: string, amount: number}> {
     // Create cache directory if it doesn't exist
     if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir) }
 
@@ -56,7 +72,7 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
                 package: thePackage.Package[0],
                 sku: thePackage.SKU[0],
                 amount: Number(thePackage.Amount[0])
-            }
+            } 
 
             fs.writeFileSync(cacheFile, JSON.stringify(values), 'utf8')
             console.log(`Cache Created: ${cacheFile}`)
