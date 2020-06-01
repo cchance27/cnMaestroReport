@@ -18,10 +18,11 @@ function calcBpHz(perf: apiPerformance, stats: apiStatistics, downlink: boolean)
 export function perfToBpHz(perf: apiPerformance[], stats: apiStatistics, downlink: boolean) {
     let metricResults: metricEntry[] = [];
 
-    for (let i = 0; i < perf.length; i++) {
+    let nonEmptyPerfs = perf.filter(p => p.radio)
+    for (let i = 0; i < nonEmptyPerfs.length; i++) {
         metricResults.push({
-            timestamp: moment(perf[i].timestamp),
-            value: calcBpHz(perf[i], stats, downlink)
+            timestamp: moment(nonEmptyPerfs[i].timestamp),
+            value: calcBpHz(nonEmptyPerfs[i], stats, downlink)
         });
     }
     return metricResults;
