@@ -18,7 +18,10 @@
     "node-fetch": "^2.6.0",
     "nodemailer": "^6.4.8",
     "pdfkit": "^0.9.1",
+    "pdfmake": "^0.1.65",
+    "pdfmake-unicode": "0.0.1",
     "request": "^2.88.0",
+    "roboto-font": "^0.1.0",
     "soap": "^0.31.0",
     "svg-to-pdfkit": "^0.1.7",
     "visavail": "^1.4.1",
@@ -29,6 +32,7 @@
     "@types/d3": "^5.7.2",
     "@types/jsdom": "^11.12.0",
     "@types/node": "^10.14.8",
+    "@types/pdfmake": "^0.1.13",
     "typescript": "^3.5.1"
   }
 }
