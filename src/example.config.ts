@@ -2,7 +2,7 @@ let moment = require('moment')
 
 class Configuration {
 	// Mail Config
-	sendMail = true
+	enableMail = true
 	mailTransport = {
 		host: "mail.somedomain.com",
 		port: 587,
@@ -60,7 +60,7 @@ export const mailTransport = config.mailTransport
 export const eipUsername = config.eipUsername
 export const eipPassword = config.eipPassword
 export const eipWsdlUrl = config.eipWsdlUrl
-export const sendMail = config.sendMail
+export const enableMail = config.enableMail
 export const toEmailAddress = config.toEmailAddress
 export const days = config.days
 export const clientid = config.clientid

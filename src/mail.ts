@@ -1,4 +1,4 @@
-import { fromEmail, toEmailAddress, fileDateTag, mailTransport } from "./config";
+import { fromEmail, toEmailAddress, fileDateTag, mailTransport, enableMail } from "./config";
 import { getReadableFileSizeString } from "./myFunctions";
 import * as nodemailer from 'nodemailer'
 
@@ -22,10 +22,14 @@ export async function sendEmail(attachments: string[], content: string, title: s
 }
 
 export async function sendEmailReport(attachments) {
-    let content = `Please find attached the Automated Report generated from cnMaestro API Data.`
+    if (enableMail) {
+        let content = `Please find attached the Automated Report generated from cnMaestro API Data.`
 
-    console.log(`Sending E-Mail Report: ${toEmailAddress.join(", ")}...`)
-    return sendEmail(attachments, content, `CnMaestro Report (${fileDateTag})`)
+        console.log(`Sending E-Mail Report: ${toEmailAddress.join(", ")}...`)
+        return sendEmail(attachments, content, `CnMaestro Report (${fileDateTag})`)
+    } else {
+        console.log(`Mail Disabled in Configuration`)
+    }
 }
 
 // Not used yet but was used before for generating some tables for the email previously maybe in the future when refactored to be generic
