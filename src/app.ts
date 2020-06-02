@@ -3,6 +3,7 @@ import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from './cnMa
 import { loginCNMaestro } from './myFunctions'
 import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics } from './cnMaestroApiCalls'
 import { generateFullTechReport } from './reports/generateFullTechReport'
+import { createFullTechReport } from './reports/createFullTechReport'
 import { generateLiteReport } from './reports/generateLiteReport'
 import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
@@ -39,6 +40,7 @@ async function main() {
     // Generate a technical report
     attachments.push(await generateFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics))
 
+    attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics))
     // Generate lite report
     //attachments.push(await generateLiteReport(allApPerformance, allSmStatistics, allSmPackages))
 
