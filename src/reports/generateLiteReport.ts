@@ -24,8 +24,8 @@ export async function generateLiteReport(allApPerformance: Map<string, apiPerfor
 
     // Title page
     doc.image(logoFile, (doc.page.width / 2) - 88, (doc.page.height / 3) - 100);
-    doc.fontSize('32').text("Canopy450 Performance Report", 0, 0.4 * (doc.page.height - doc.heightOfString("Canopy450 Performance Report", { width: doc.page.width, align: 'center' })), { width: doc.page.width, align: 'center' })
-    doc.fontSize('12').text(`${fileStartDate} - ${fileEndDate}`, { width: doc.page.width, align: 'center' })
+    doc.fontSize(32).text("Canopy450 Performance Report", 0, 0.4 * (doc.page.height - doc.heightOfString("Canopy450 Performance Report", { width: doc.page.width, align: 'center' })), { width: doc.page.width, align: 'center' })
+    doc.fontSize(12).text(`${fileStartDate} - ${fileEndDate}`, { width: doc.page.width, align: 'center' })
     
     let congestionValue = 90 // 90% usage or more is congested in a time period
     let pctForCongestion = 20 // 20% of time periods being congested means this sectors considered congested.
