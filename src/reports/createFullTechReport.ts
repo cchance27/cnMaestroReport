@@ -1,17 +1,13 @@
-import PDFDocument from 'pdfkit'
-import SVGtoPDF from 'svg-to-pdfkit'
-import PdfTable from 'voilab-pdf-table'
 import { logoFile, fileStartDate, fileEndDate } from '../config'
-import { columns } from '../columnsAndTypes'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
 import { graph } from '../charting'
 import { getMetric } from '../cnMaestroMetricTools'
-import { perfToTableData, perfToTable } from '../perfToTableData'
+import { perfToTable } from '../perfToTableData'
 import { isCongested } from '../congestion'
 import { fileDateTag } from '../config'
-import { addPdfHeading, genTable } from "../pdfFunctions"
+import { genTable } from "../pdfFunctions"
 import * as fs from 'fs'
-var pdfMake = require('pdfmake')
+const pdfMake = require('pdfmake')
 
 export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>) {
     let pdfStyles = {
