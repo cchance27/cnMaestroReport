@@ -22,17 +22,45 @@ interface tableLayout {
 
 export function genTable(data: {}[]): table {
     let headers: {}[] = []
-    Object.keys(data[0]).forEach(k => headers.push({text: k, style: 'tableHeader'}))
+    let widths: any = []
 
+    if (data.length == 0) { return null }
+
+    let headTop = [{}, {}, {}, 
+        {text: 'Download', colSpan: 5, alignment: 'center', fillColor: '#c0d6e4'}, {}, {}, {}, {}, 
+        {text: 'Upload', colSpan: 5, alignment: 'center'}, {}, {}, {}, {}]
+
+    Object.keys(data[0]).forEach((k, i) => {
+        headers.push(
+            { 
+                text: k.replace("Download ", "").replace("Upload", ""), 
+                style: 'tableHeader', 
+                alignment: (i == 0 ? 'left' : 'center'), 
+                fillColor: ((i >= 3 && i < 8) ? '#c0d6e4' : 'white')
+            })
+
+        widths.push((i == 3 || i == 8) ? 43 : 'auto') 
+    })
+    
     let result = {
         style: 'table',
+        width: 560,
         table: {
-            headerRows: 1,
-            body: [headers]
+            widths: widths,
+            headerRows: 2,
+            body: [headTop, headers]
         }, 
         layout: 'lightHorizontalLines'
     }
 
-    data.forEach(r => result.table.body.push(Object.keys(r).map(i => ({ text: r[i], style: "tableCell" }))))
+    data.forEach(row => result.table.body.push(Object.keys(row).map((k, i) => {
+        return ({ 
+            text: row[k].formatted, 
+            style: "tableCell", 
+            alignment: (i == 0 ? 'left' : 'center'), 
+            fillColor: ((i >= 3 && i < 8) ? '#c0d6e4' : 'white'),
+            color: row[k].alerted ? 'red' : 'black'
+        }) // alight first item left rest center
+    })))
     return result
 }

@@ -44,8 +44,8 @@ export const getContent = function (url: string) {
     })
 };
 
-export const getReadableFileSizeString = function (fileSizeInBytes: number) {
-    if (!fileSizeInBytes) return "0 kbps"
+export const getReadableFileSizeString = function (fileSizeInBytes: number, fixedDigits: number = 0) {
+    if (!fileSizeInBytes) return "0 bps"
     var i = -1;
     var byteUnits = [' kbps', ' mbps', ' gbps', ' tbps', 'pbps', 'ebps', 'zbps', 'ybps'];
     do {
@@ -53,7 +53,7 @@ export const getReadableFileSizeString = function (fileSizeInBytes: number) {
         i++;
     } while (fileSizeInBytes > 1024);
 
-    return Math.max(fileSizeInBytes, 0.1).toFixed(1) + byteUnits[i];
+    return Math.max(fileSizeInBytes, 0.1).toFixed(fixedDigits) + byteUnits[i];
 };
 
 

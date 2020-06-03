@@ -209,8 +209,8 @@ export function availChart(apPerfs: apiPerformance[], metricName: string, metric
 
 export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allApProductTypes: Map<string, string[]>, congestionValue: number, pctConsideredCongested: number): string {
     const window = d3.select((new JSDOM(`<html><head></head><body></body></html>`)).window.document)
-    const fullWidth = 720, fullHeight = 300, 
-        margin = { top: 20, right: 40, bottom: 60, left: 75 }, 
+    const fullWidth = 550, fullHeight = 220, 
+        margin = { top: 40, right: 40, bottom: 60, left: 75 }, 
         width = fullWidth - margin.left - margin.right, 
         height = fullHeight - margin.top - margin.bottom
     let minDate: number = 999999999999999, maxDate: number = 0, max: number = 0, max2: number = 0
@@ -269,10 +269,10 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
         .attr("transform", `translate(${fullWidth / 2}, 0)`).attr("dy", "1.2em").attr("text-anchor", "middle").style("font-size", "10px");
 
     svgHeaders.append("text").text("Bandwidth")
-        .attr("transform", `translate(10, ${height / 2}) rotate(-90)`).attr("fill", "#000").attr("text-anchor", "middle").style("font-size", "12px");
+        .attr("transform", `translate(10, ${height / 2}) rotate(-90)`).attr("fill", "#000").attr("text-anchor", "middle").style("font-size", "8px");
 
     svgHeaders.append("text").text("Utilization / Efficiency / Subscribers")
-        .attr("transform", `translate(${fullWidth}, ${height / 2}) rotate(-90)`).attr("dy", "-0.5em").attr("fill", "#000").attr("text-anchor", "middle").style("font-size", 12);
+        .attr("transform", `translate(${fullWidth}, ${height / 2}) rotate(-90)`).attr("dy", "-0.5em").attr("fill", "#000").attr("text-anchor", "middle").style("font-size", 8);
 
     let dlu = getMetric(apPerfs, "dl_frame_utilization")
     let ulu = getMetric(apPerfs, "ul_frame_utilization")
@@ -302,30 +302,30 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
 
     bottomDetails.append("text")
         .text(`DL Maximum: ${getReadableFileSizeString(dlsm * 1024)}`)
-        .attr("transform", `translate(30, ${fullHeight - 4})`).attr('y', '-1.4em').attr("fill", "#000").attr("text-anchor", "start").style("font-size", 12)
+        .attr("transform", `translate(30, ${fullHeight - 4})`).attr('y', '-1.4em').attr("fill", "#000").attr("text-anchor", "start").style("font-size", 8)
     bottomDetails.append("text")
         .text(`UL Maximum: ${getReadableFileSizeString(ulsm * 1024)}`)
-        .attr("transform", `translate(30, ${fullHeight - 4})`).attr("fill", "#000").attr("text-anchor", "start").style("font-size", 12)
+        .attr("transform", `translate(30, ${fullHeight - 4})`).attr("fill", "#000").attr("text-anchor", "start").style("font-size", 8)
     bottomDetails.append("text")
         .text(`DL Efficiency (avg): ${dlbphAvg.toFixed(0)}bit/hz`)
-        .attr("transform", `translate(${(fullWidth / 4) * 1 + 30}, ${fullHeight - 4})`).attr('y', '-1.4em').attr("fill", "#000").attr("text-anchor", "start").style("font-size", 12)
+        .attr("transform", `translate(${(fullWidth / 4) * 1 + 30}, ${fullHeight - 4})`).attr('y', '-1.4em').attr("fill", "#000").attr("text-anchor", "start").style("font-size", 8)
     bottomDetails.append("text")
         .text(`UL Efficiency (avg): ${ulbphAvg.toFixed(0)}bit/hz`)
-        .attr("transform", `translate(${(fullWidth / 4) * 1 + 30}, ${fullHeight - 4})`).attr("fill", "#000").attr("text-anchor", "start").style("font-size", 12)
+        .attr("transform", `translate(${(fullWidth / 4) * 1 + 30}, ${fullHeight - 4})`).attr("fill", "#000").attr("text-anchor", "start").style("font-size", 8)
     bottomDetails.append("text")
         .text(`DL Congestion (Hrs): ${(dluCongestion).toFixed(2)}%`)
-        .attr("transform", `translate(${(fullWidth / 4) * 2 + 30}, ${fullHeight - 4})`).attr('y', '-1.4em').attr("fill", dluColor).attr("text-anchor", "start").style("font-size", 12);
+        .attr("transform", `translate(${(fullWidth / 4) * 2 + 30}, ${fullHeight - 4})`).attr('y', '-1.4em').attr("fill", dluColor).attr("text-anchor", "start").style("font-size", 8);
     bottomDetails.append("text")
         .text(`UL Congestion (Hrs): ${(uluCongestion).toFixed(2)}%`)
-        .attr("transform", `translate(${(fullWidth / 4) * 2 + 30}, ${fullHeight - 4})`).attr("fill", uluColor).attr("text-anchor", "start").style("font-size", 12);
+        .attr("transform", `translate(${(fullWidth / 4) * 2 + 30}, ${fullHeight - 4})`).attr("fill", uluColor).attr("text-anchor", "start").style("font-size", 8);
     bottomDetails.append("text")
         .text(`Subscribers (max): ${(subsm)}`)
-        .attr("transform", `translate(${(fullWidth / 4) * 3 + 30}, ${fullHeight - 4})`).attr('y', '-1.4em').attr("fill", "#000").attr("text-anchor", "start").style("font-size", 12);
+        .attr("transform", `translate(${(fullWidth / 4) * 3 + 30}, ${fullHeight - 4})`).attr('y', '-1.4em').attr("fill", "#000").attr("text-anchor", "start").style("font-size", 8);
     bottomDetails.append("text")
         .text(`Session Drops (max): ${(subDropm)}`)
-        .attr("transform", `translate(${(fullWidth / 4) * 3 + 30}, ${fullHeight - 4})`).attr("fill", "#000").attr("text-anchor", "start").style("font-size", 12);
+        .attr("transform", `translate(${(fullWidth / 4) * 3 + 30}, ${fullHeight - 4})`).attr("fill", "#000").attr("text-anchor", "start").style("font-size", 8);
 
-    let svgGraphArea = svg.append('g').attr('transform', `translate(${margin.left}, 0)`);
+    let svgGraphArea = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`);
     let dataPlots = svgGraphArea.append('g');
 
     // Draw lines and areas to the map
@@ -360,34 +360,36 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
     // Bottom Axis
     axis.append('g').attr("id", "main_x").attr("class", "x_axis").attr("transform", `translate(0, ${height})`)
         .call(d3.axisBottom(x).ticks(8).tickPadding(2).tickSize(5).tickSizeOuter(0).tickFormat((d: number) => moment.unix(d).format("MM/DD h:mma")))
-        .attr("fill", "#000")
+        .attr("fill", "#000").attr("font-size", 8)
 
     // Left Axis
     axis.append('g').attr("id", "y2").attr("class", "y_axis").attr("transform", `translate(0, 0)`)
         .call(d3.axisLeft(y).ticks(7).tickSize(5).tickSizeOuter(0).tickFormat((d: number) => getReadableFileSizeString(d * 1024)))
-        .attr("fill", "#000")
+        .attr("fill", "#000").attr("font-size", 8)
 
     // Right Axis
     axis.append('g').attr("id", "y2").attr("class", "y_axis").attr("transform", `translate(${width}, 0)`)
         .call(d3.axisRight(y2).ticks(4).tickSize(5).tickSizeOuter(0))
-        .attr("fill", "#000")
+        .attr("fill", "#000").attr("font-size", 8)
 
     // Generate the legends
     let svgLegend = svgGraphArea.append('g');
 
     // Left Legend
     let svgLegendEntryLeft = svgLegend.selectAll('.legend').data(legendOrdinal.domain()).enter().append('g')
-        .attr("transform", (d, i) => { return "translate(10, " + (height - 30 - (i * 14)) + ")"; });
-    svgLegendEntryLeft.append('rect').attr('x', -5).attr('y', -5).attr('width', 90).attr('height', 14).style('fill', 'lightgrey').attr('fill-opacity', '0.6');
-    svgLegendEntryLeft.append('rect').attr("x", 0).attr("y", -2).attr("width", 8).attr("height", 8).style("fill", (d, i) => color[i]).style("stroke-width", 1).style("stroke", "black");
-    svgLegendEntryLeft.append('text').attr('transform', "translate(14, 5)").text((d, i) => d).style("text-anchor", "start").style("font-size", 10);
+        .attr("transform", (d, i) => { return "translate(10, " + (height - 10 - (i * 11)) + ")"; }) // container
+    svgLegendEntryLeft.append('rect').attr('x', -5).attr('y', -4).attr('width', 80).attr('height', 10).style('fill', 'lightgrey').attr('fill-opacity', '0.6') //bg
+    svgLegendEntryLeft.append('rect').attr("x", 0).attr("y", -2).attr("width", 6).attr("height", 6)
+        .style("fill", (d, i) => color[i]).style("stroke-width", 1).style("stroke", "black") //block
+    svgLegendEntryLeft.append('text').attr('transform', "translate(10, 5)").text((d, i) => d).style("text-anchor", "start").style("font-size", 8) // text
     
     // Right Legend
     let svgLegendEntryRight = svgLegend.selectAll('.legend').data(legendOrdinal1.domain()).enter().append('g')
-        .attr("transform", (d, i) => "translate(" + (width - 14) + ", " + (height - 30 - (i * 14)) + ")");
-    svgLegendEntryRight.append('rect').attr('x', -110).attr('y', -5).attr('width', 120).attr('height', 14).style('fill', 'lightgrey').attr('fill-opacity', '0.6');
-    svgLegendEntryRight.append('rect').attr("x", -5).attr("y", -2).attr("width", 8).attr("height", 8).style("fill", (d, i) => color2[i]).style("stroke-width", 1).style("stroke", "black");
-    svgLegendEntryRight.append('text').attr('transform', "translate(-14, 5)").text((d, i) => d).style("text-anchor", "end").style("font-size", 10);
+        .attr("transform", (d, i) => "translate(" + (width - 14) + ", " + (height - 10 - (i * 11)) + ")") // container
+    svgLegendEntryRight.append('rect').attr('x', -90).attr('y', -4).attr('width', 100).attr('height', 10).style('fill', 'lightgrey').attr('fill-opacity', '0.6') //bg
+    svgLegendEntryRight.append('rect').attr("x", -5).attr("y", -2).attr("width", 6).attr("height", 6)
+        .style("fill", (d, i) => color2[i]).style("stroke-width", 1).style("stroke", "black") //block
+    svgLegendEntryRight.append('text').attr('transform', "translate(-10, 5)").text((d, i) => d).style("text-anchor", "end").style("font-size", 8) // text
 
     svg.selectAll('#main_x g text').each(insertLinebreaks)
 

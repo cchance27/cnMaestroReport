@@ -2,7 +2,6 @@ import { clientid, client_secret, baseURL, startTime, endTime, fileDateTag }  fr
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from './cnMaestroTypes'
 import { loginCNMaestro } from './myFunctions'
 import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics } from './cnMaestroApiCalls'
-import { generateFullTechReport } from './reports/generateFullTechReport'
 import { createFullTechReport } from './reports/createFullTechReport'
 import { generateLiteReport } from './reports/generateLiteReport'
 import { getAllSmEipPackages } from './engageipApiCalls'
@@ -38,9 +37,8 @@ async function main() {
     let attachments: string[] = []
 
     // Generate a technical report
-    attachments.push(await generateFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics))
-
     attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics))
+
     // Generate lite report
     //attachments.push(await generateLiteReport(allApPerformance, allSmStatistics, allSmPackages))
 
