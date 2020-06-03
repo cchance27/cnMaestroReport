@@ -20,7 +20,7 @@ interface tableLayout {
     body: any // [[value,value,value]]
 }
 
-export function genTable(data: {}[]): table {
+export function genTable(data: {}[], highlightFieldName: string = ""): table {
     let headers: {}[] = []
     let widths: any = []
 
@@ -54,11 +54,14 @@ export function genTable(data: {}[]): table {
     }
 
     data.forEach(row => result.table.body.push(Object.keys(row).map((k, i) => {
+        let fillColor = ((i >= 3 && i < 8) ? '#c0d6e4' : 'white')
+        fillColor = highlightFieldName == k ? "yellow" : fillColor
+
         return ({ 
             text: row[k].formatted, 
             style: "tableCell", 
             alignment: (i == 0 ? 'left' : 'center'), 
-            fillColor: ((i >= 3 && i < 8) ? '#c0d6e4' : 'white'),
+            fillColor: fillColor ,
             color: row[k].alerted ? 'red' : 'black'
         }) // alight first item left rest center
     })))

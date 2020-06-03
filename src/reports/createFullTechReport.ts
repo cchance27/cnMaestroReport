@@ -21,7 +21,7 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
         frontDate: { fontSize: 12, italics: true },
         pageHeader: { fontSize: 16, bold: true, color: 'lightgrey' },
         table: {
-            margin: [0, 5, 0, 30]
+            margin: [0, 5, 0, 15]
         },
         tableHeader: {
             bold: true,
@@ -63,31 +63,48 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
             { text: 'cnMaestro Full Performance Report', style: "frontHeader", alignment: 'center' },
             { text: `${fileStartDate} - ${fileEndDate}`, style: "frontDate", alignment: 'center'},
 
+            //Top 10 Overview Page
+            { columns: [
+                { text: 'Top 10 Overview', style: 'pageHeader', alignment: 'left' }, 
+                { text: fileStartDate, style: 'pageHeader', alignment: 'right' }
+            ], pageBreak: 'before', margin: [0,0,0,15] },
+            { text: "Top 10 Connected SMs", style: 'header' }, // New Page
+            { text: "Panels with the most subscribers", style: 'subHeader'},
+            genTable(standardPerfTable.sort((a, b) => b.SMs.value - a.SMs.value).slice(0, 10), "SMs"),
+
+            { text: "Top 10 Peak Downlink", style: 'header' }, // New Page
+            { text: "Panels with the highest downlink throughput", style: 'subHeader'},
+            genTable(standardPerfTable.sort((a, b) => b["Download Throughput (Max)"].value - a["Download Throughput (Max)"].value).slice(0, 10), "Download Throughput (Max)"),
+
+            { text: "Top 10 Peak Upload", style: 'header' }, // New Page
+            { text: "Panels with the highest uplink throughput", style: 'subHeader'},
+            genTable(standardPerfTable.sort((a, b) => b["Upload Throughput (Max)"].value - a["Upload Throughput (Max)"].value).slice(0, 10), "Upload Throughput (Max)"),
+
             // 450i Overview Page
             { columns: [
-                    { text: '450/450i Concern Areas', style: 'pageHeader', alignment: 'left' }, 
+                    { text: '450/450i Attention Areas', style: 'pageHeader', alignment: 'left' }, 
                     { text: fileStartDate, style: 'pageHeader', alignment: 'right' }
-                ], pageBreak: 'before', margin: [0,0,0,30] },
+                ], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Download Congestion Overview (450/450i)", style: 'header' }, // New Page
             { text: "450/450i sectors with over 20% of downlink hours congested", style: 'subHeader'},
-            genTable(dlFrameCongestion.filter((a) => a["Download Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Download Busy Hours"].value - b["Download Busy Hours"].value)).reverse()),
+            genTable(dlFrameCongestion.filter((a) => a["Download Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Download Busy Hours"].value - b["Download Busy Hours"].value)).reverse(), "Download Busy Hours"),
 
             { text: "Upload Congestion Overview (450/450i)", style: 'header' },
             { text: "450/450i sectors with over 20% of uplink hours congested", style: 'subHeader'},
-            genTable(ulFrameCongestion.filter((a) => a["Upload Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Upload Busy Hours"].value - b["Upload Busy Hours"].value)).reverse()), 
+            genTable(ulFrameCongestion.filter((a) => a["Upload Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Upload Busy Hours"].value - b["Upload Busy Hours"].value)).reverse(), "Upload Busy Hours"), 
 
             //450m Overview Page
             { columns: [
-                    { text: '450m Concern Areas', style: 'pageHeader', alignment: 'left' }, 
+                    { text: '450m Attention Areas', style: 'pageHeader', alignment: 'left' }, 
                     { text: fileStartDate, style: 'pageHeader', alignment: 'right' }
-                ], pageBreak: 'before', margin: [0,0,0,30] },
+                ], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Download Low Bits/Hz Overview (450m)", style: 'header' }, // New Page
             { text: "450m sectors with Average download bits/hz below 4", style: 'subHeader'},
-            genTable(standardPerfTable.filter((a) => a["Download b/Hz (Avg)"].value <= 4 && a.Type.value == '450m').sort((a, b) => (a["Download b/Hz (Avg)"].value - b["Download b/Hz (Avg)"].value)).reverse()),
+            genTable(standardPerfTable.filter((a) => a["Download b/Hz (Avg)"].value <= 4 && a.Type.value == '450m').sort((a, b) => (a["Download b/Hz (Avg)"].value - b["Download b/Hz (Avg)"].value)).reverse() , "Download b/Hz (Avg)"),
             
             { text: "Upload Low Bits/Hz Overview (450m)", style: 'header' },
             { text: "450m sectors with Average upload bits/hz below 2", style: 'subHeader'},
-            genTable(standardPerfTable.filter((a) => a["Upload b/Hz (Avg)"].value <= 2 && a.Type.value == '450m').sort((a, b) => (a["Upload b/Hz (Avg)"].value - b["Upload b/Hz (Avg)"].value)).reverse()),
+            genTable(standardPerfTable.filter((a) => a["Upload b/Hz (Avg)"].value <= 2 && a.Type.value == '450m').sort((a, b) => (a["Upload b/Hz (Avg)"].value - b["Upload b/Hz (Avg)"].value)).reverse(), "Upload b/Hz (Avg)"),
             
         ], 
         styles: pdfStyles,
@@ -115,13 +132,6 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
         towerSvgs.forEach(s => docDefinition.content.push({svg: s, width: 550, margin: [0,0,0,30]}))
     })
 
-
-
-
-
-
-
-
     let printer = new pdfMake(pdfFonts);
     const file = `${fileDateTag} - cnMaestro Tech Report.pdf`
     let pdfDoc = printer.createPdfKitDocument(docDefinition)
@@ -138,51 +148,3 @@ function createTowerSvgs(tower: apiTower, allApStatistics: Map<string, apiStatis
 
     return svgs
 }
-
-/*
-function createSiteSVGPages(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>) {
-    // Generate SVGs for Available Towers->APs
-    let svgs = createTowerSvgs(towers, allApStatistics, allApPerformance, allApProductTypes)
-
-    let svgPages[]
-    // SVG Pages
-    let svgPosition: number = 0
-    let thisSVGPosition: number = 0
-    for (let svgTower in svgs) {
-        for (let svg in svgs[svgTower]) {
-            // This is a new Tower so we need a new site page with table.
-            if (svgPosition == 0) {
-
-                                    // New Tower (So make a table frontpage)
-                console.log(`New Tower Page: ${svgTower}`)
-                doc.addPage()
-                doc.image(logoFile, (doc.page.width / 2) - 88, (doc.page.height / 3) - 100)
-                doc.fontSize(32)
-                doc.text(svgTower, 0, 0.4 * (doc.page.height - doc.heightOfString(svgTower, { width: doc.page.width, align: 'center' })), { width: doc.page.width, align: 'center' })
-                doc.text(" ")
-                doc.fontSize(8)
-                let towerPanels = perfToTableData(new Map([...allApPerformance].filter(([k, v]) => v[0].tower == svgTower)), allApStatistics, allApProductTypes)
-                table.addBody(towerPanels)
-            }
-
-            // This is a new page so we need a title at the top
-            if (svgPosition % 3 == 0) {
-                console.log(`New SVG Page`)
-                doc.addPage()
-                doc.fillColor('lightgrey')
-                doc.fontSize(18)
-                doc.text(svgTower, 20, 15)
-                doc.text(fileStartDate, 500, 15)
-                thisSVGPosition = 0
-            }
-
-            // Add SVG
-            console.log(`Adding SVG: ${svgTower} - ${svg} - ${pdfSVGloc[thisSVGPosition]}`)
-            SVGtoPDF(doc, svgs[svgTower][svg], pdfSVGMargin, pdfSVGloc[thisSVGPosition])
-            svgPosition += 1
-            thisSVGPosition += 1
-        }
-        svgPosition = 0
-    }
-}
-*/
