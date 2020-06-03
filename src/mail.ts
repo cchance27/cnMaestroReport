@@ -16,7 +16,7 @@ export async function sendEmail(attachments: string[], content: string, title: s
         attachments: attachments.map(f => ({ filename: f, path: f, cid: f }))
     }
 
-    await transporter.sendMail(message)
+    let resp = await transporter.sendMail(message)
     console.log('Message sent successfully!')
     transporter.close();
 }
@@ -26,7 +26,7 @@ export async function sendEmailReport(attachments) {
         let content = `Please find attached the Automated Report generated from cnMaestro API Data.`
 
         console.log(`Sending E-Mail Report: ${toEmailAddress.join(", ")}...`)
-        return sendEmail(attachments, content, `CnMaestro Report (${fileDateTag})`)
+        return await sendEmail(attachments, content, `CnMaestro Report (${fileDateTag})`)
     } else {
         console.log(`Mail Disabled in Configuration`)
     }
