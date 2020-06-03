@@ -65,14 +65,14 @@ export function perfToTable(data: Map<string, apiPerformance[]>, stat: Map<strin
 
                 "Download Throughput (Max)": { value: dlmax, formatted: getReadableFileSizeString(dlmax, 0) },
                 "Download Usage (Mean)": { value: dlumean, formatted: `${dlumean.toFixed(1)}%`, alerted: type != '450m' && dlumean > 70 },
-                "Download b/Hz (Max)": { value: dlmaxbph, formatted: dlmaxbph.toFixed(0), alerted: type == '450m' && dlmaxbph < 5},
-                "Download b/Hz (Avg)": { value: dlavgbph, formatted: dlavgbph.toFixed(0), alerted: type == '450m' && dlavgbph < 5 },
+                "Download b/Hz (Max)": { value: dlmaxbph, formatted: dlmaxbph.toFixed(0), alerted: type == '450m' && dlmaxbph <= 5},
+                "Download b/Hz (Avg)": { value: dlavgbph, formatted: dlavgbph.toFixed(0), alerted: type == '450m' && dlavgbph <= 5 },
                 "Download Busy Hours": { value: dlbusyhr, formatted: `${dlbusyhr.toFixed(0)}%`, alerted: type != '450m' && dlbusyhr >= 20},
 
                 "Upload Throughput (Max)": { value: ulmax, formatted: getReadableFileSizeString(ulmax, 0) },
                 "Upload Usage (Mean)": { value: ulumean, formatted: `${ulumean.toFixed(1)}%`, alerted: type != '450m' && ulumean > 70 },
-                "Upload b/Hz (Max)": { value: ulmaxbph, formatted: ulmaxbph.toFixed(0), alerted: type == '450m' && ulmaxbph < 5},
-                "Upload b/Hz (Avg)": { value: ulavgbph, formatted: ulavgbph.toFixed(0), alerted: type == '450m' && ulavgbph < 5 },
+                "Upload b/Hz (Max)": { value: ulmaxbph, formatted: ulmaxbph.toFixed(0), alerted: type == '450m' && ulmaxbph <= 2},
+                "Upload b/Hz (Avg)": { value: ulavgbph, formatted: ulavgbph.toFixed(0), alerted: type == '450m' && ulavgbph <= 2 },
                 "Upload Busy Hours": { value: ulbusyhr, formatted: `${ulbusyhr.toFixed(0)}%`, alerted: type != '450m' && ulbusyhr >= 20 },
             })
         })
