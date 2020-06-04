@@ -1,13 +1,6 @@
-export function addPdfHeading(header: string, subheader: string, doc, newPage: boolean = false) {
-    if (newPage) {
-        doc.addPage()
-    }
-    console.log(`Add PDF Heading: ${header}`)
-    doc.fontSize('16').fillColor('black').text(header);
-    doc.fontSize('14').fillColor('black').text(subheader);
-    doc.fontSize('8');
-    return doc;
-}
+import { pdfFonts, pdfStyles } from "./config";
+import * as fs from 'fs'
+const pdfMake = require('pdfmake')
 
 interface table {
     style: string
@@ -20,7 +13,7 @@ interface tableLayout {
     body: any // [[value,value,value]]
 }
 
-export function genTable(data: {}[], highlightFieldName: string = ""): table {
+export function genPdfTableDDContent(data: {}[], highlightFieldName: string = ""): table {
     let headers: {}[] = []
     let widths: any = []
 
@@ -66,4 +59,41 @@ export function genTable(data: {}[], highlightFieldName: string = ""): table {
         }) // alight first item left rest center
     })))
     return result
+}
+
+
+export async function generateAndSavePDF(docDefinition: any, filename: string){
+    try {
+        // Setup Fonts
+        let printer = new pdfMake(pdfFonts)
+
+        // Setup styles and margins
+        docDefinition['styles'] = pdfStyles
+        docDefinition['pageMargins'] = [ 20, 20, 20, 20 ]
+
+        // Create document
+        let pdfDoc = printer.createPdfKitDocument(docDefinition)
+
+        // Save to file
+        await pdfDoc.pipe(fs.createWriteStream(filename))
+        pdfDoc.end()  
+
+        // Return filename if successful
+        return filename
+    } catch(err) {
+        console.error(err)
+        // Return null if something fails
+        return null
+    }
+}
+
+export function addPdfHeading(header: string, subheader: string, doc, newPage: boolean = false) {
+    if (newPage) {
+        doc.addPage()
+    }
+    console.log(`Add PDF Heading: ${header}`)
+    doc.fontSize('16').fillColor('black').text(header);
+    doc.fontSize('14').fillColor('black').text(subheader);
+    doc.fontSize('8');
+    return doc;
 }

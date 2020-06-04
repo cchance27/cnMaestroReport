@@ -1,8 +1,9 @@
-import { clientid, client_secret, baseURL, startTime, endTime, fileDateTag }  from './config'
+import { clientid, client_secret, baseURL, startTime, endTime }  from './config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from './cnMaestroTypes'
 import { loginCNMaestro } from './myFunctions'
 import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics } from './cnMaestroApiCalls'
 import { createFullTechReport } from './reports/createFullTechReport'
+import { createHighLevelReport } from './reports/createHighLevelReport'
 import { generateLiteReport } from './reports/generateLiteReport'
 import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
@@ -24,8 +25,8 @@ async function main() {
     // Grab all clientSM Statistics
     const allSmStatistics: Map<string, apiSmStatistics[]> = await getAllSmStatistics(towers, accessToken)
 
-    // Grab EIP subscriber packages for the cnMaestro SMs
-    //const allSmPackages: ({package: string, sku: string, amount: number}) = await getAllSmEipPackages(allSmStatistics)
+    // Grab EIP subscriber packages for the cnMaestro SMs, Returns ESN: {package: string, sku: string, amount: number}
+    const allSmPackages = await getAllSmEipPackages(allSmStatistics)
 
     // Fetch all the AP Performance data for our time period
     const allApPerformance: Map<string, apiPerformance[]> = await getAllApPerformance(allApStatistics, accessToken, startTime, endTime)
@@ -39,6 +40,7 @@ async function main() {
     // Generate a technical report
     attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics))
 
+    attachments.push(await createHighLevelReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics, allSmPackages))
     // Generate lite report
     //attachments.push(await generateLiteReport(allApPerformance, allSmStatistics, allSmPackages))
 

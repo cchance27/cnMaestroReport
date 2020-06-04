@@ -32,8 +32,10 @@ export function findEsnInPackages(ViewUserPackageWithServices: any, ESN: string)
     return thePackage[0]
 }
 
-export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStatistics[]>): Promise<{package: string, sku: string, amount: number}> {
+export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStatistics[]>): Promise<{}> {
     let allSmPackageDetails = {}
+
+    // MAC: {package: string, sku: string, amount: number}
 
     let towerCount = 0
     // Loop through all SMs
@@ -51,7 +53,7 @@ export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStat
         towerCount++
     }
 
-    return (allSmPackageDetails as ({package: string, sku: string, amount: number}))
+    return allSmPackageDetails
 
 }
 

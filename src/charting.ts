@@ -24,22 +24,24 @@ export function insertLinebreaks(d) {
     }
 }
 
+// [{Name: string, total: number , ...Columns...: number}
 export function stackedBarChart(data, widthVar: number, heightVar: number, valueDollars: boolean = true) {
     console.log(`New StackedBar Chart`)
-    // [{Name: number, total: number , ...Columns...: number}
+    if (data.length == 0) { return null } // No data was given to us
+    
 
     const format = valueDollars ? d3.format("$,") : d3.format(",")
-    const margin = {top: 20, right: 50, bottom: 30, left: 120},
+    const margin = {top: 0, right: 50, bottom: 15, left: 100},
     width = widthVar - margin.left - margin.right,
     height = heightVar - margin.top - margin.bottom
 
     const window = d3.select((new JSDOM(`<html><head></head><body></body></html>`)).window.document)
     let svg = window.select('body').append('div').attr('class', 'container').append("svg").attr("width", widthVar).attr("height", heightVar).append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.bottom + ")")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
     
     data.sort((a, b) => b.total - a.total)
 
-    let y = d3.scaleBand().rangeRound([0, height-20]).paddingInner(0.05).align(0.1).domain(data.map(d => d.name))
+    let y = d3.scaleBand().rangeRound([0, height]).paddingInner(0.2).align(0.2).domain(data.map(d => d.name))
     let x = d3.scaleLinear().rangeRound([0, width]).domain([0, Number(d3.max(data, d => (d as any).total))]).nice()
     let keys = Object.keys(data[0]).filter(d => d != 'total' && d != 'name') // skip name and total
     let z = d3.scaleOrdinal(schemeCategory10).domain(keys)
@@ -48,45 +50,44 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
         .data(d3.stack().keys(keys)(data))
         .enter().append("g")
         .attr("fill", d => z(d.key))
-        .selectAll("rect")
-        .data(d => d).enter()
+        .selectAll("rect").data(d => d).enter()
         .append("rect")
             .attr("y", d => y((d as any).data.name)).attr("x", d => x(d[0]))			   
-            .attr("width", d => x(d[1]) - x(d[0])).attr("height", y.bandwidth()-10)
+            .attr("width", d => x(d[1]) - x(d[0])).attr("height", y.bandwidth())
 
     // Totals on end of bar
     svg.append("g").selectAll("text")
         .data(data).enter().append("text")
         .text((d, i) => format((d as any).total))
-        .attr("y", (d, i) => y((d as any).name) + y.bandwidth()/2).attr("x", (d, i) =>  x((d as any).total) + 5)
-        .attr("font-family", "sans-serif").attr("font-size", 12).attr("fill", "#000").attr("font-weight", "normal")
+        .attr("y", (d, i) => y((d as any).name) + y.bandwidth()/2 + 3).attr("x", (d, i) =>  x((d as any).total) + 5)
+        .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")
 
     // Left Axis
     svg.append("g").attr("class", "axis")
         .attr("transform", "translate(0,0)")
         .call(d3.axisLeft(y).tickSizeOuter(0)).attr("font-family", "sans-serif")
-        .attr("font-family", "sans-serif").attr("font-size", 12).attr("fill", "#000").attr("font-weight", "normal")							
+        .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")							
 
     // Bottom Axis
     svg.append("g").attr("class", "axis")
         .attr("transform", "translate(0,"+height+")")				
         .call(d3.axisBottom(x).tickFormat(v => format(v)).tickSizeOuter(0))
-        .attr("font-family", "sans-serif").attr("font-size", 12).attr("fill", "#000").attr("font-weight", "normal")	
+        .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")	
 
     // Legend
     let legend = svg.append("g")
-        .attr("font-family", "sans-serif").attr("font-size", 10).attr("text-anchor", "end")
+        .attr("font-family", "sans-serif").attr("font-size", 8).attr("text-anchor", "end")
         .selectAll("g").data(keys.slice().reverse()).enter()
             .append("g")
             .attr("transform", (d, i) => "translate(0," + ((height-(keys.length*16  )) + (i * 15)) + ")")
 
     legend.append("rect").attr("x", width - 9).attr("width", 10).attr("height", 10).attr("fill", z)
-    legend.append("text").attr("x", width - 12).attr("y", 4.5).attr("dy", "0.32em").text(d => (d as any))
+    legend.append("text").attr("x", width - 12).attr("y", 4.5).attr("dy", "0.32em").attr("font-size", 8).text(d => (d as any))
 
     return window.select('.container').html().toString()
 }
 
-export function donutChart(data, diameter: number, valueDollars: boolean = true) {
+export function donutChart(data: {name: string, value: string}[], diameter: number, valueDollars: boolean = true) {
     console.log(`New Donut Chart`)
 
     const format = valueDollars ? d3.format("$,") : d3.format(",")
@@ -100,11 +101,11 @@ export function donutChart(data, diameter: number, valueDollars: boolean = true)
 
     let pie = d3.pie().sort(null).value(d => (d as any).value);
     
-    let path = d3.arc().outerRadius(radius - 10).innerRadius(radius - 120);
-    let label = d3.arc().outerRadius(radius - 80).innerRadius(radius - 80);
+    let path = d3.arc().outerRadius(radius).innerRadius(radius * 0.5);
+    let label = d3.arc().outerRadius(radius * 0.70).innerRadius(radius * 0.70);
 
     let arc = g.selectAll(".arc")
-        .data(pie(data)).enter()
+        .data(pie((data as any))).enter()
         .append("g").attr("class", "arc")
 
     arc.append("path")
@@ -113,12 +114,12 @@ export function donutChart(data, diameter: number, valueDollars: boolean = true)
 
     arc.append("text")
         .attr("transform", d => "translate(" + label.centroid((d as any)) + ")")
-        .style("font-size", 12).attr('font-family', 'Calibri').attr("dy", "-0.3em").style("text-anchor", "middle")
+        .style("font-size", 8).attr("dy", "-0.3em").style("text-anchor", "middle").attr("font-family", "sans-serif").attr("font-weight", "bold")	
         .text(d => (d as any).data.name)
     
     arc.append("text")
         .attr("transform", d => "translate(" + label.centroid((d as any)) + ")")
-        .style("font-size", 10).attr('font-family', 'Calibri').attr("dy", "1.2em").style("text-anchor", "middle")
+        .style("font-size", 8).attr("dy", "1em").style("text-anchor", "middle").attr("font-family", "sans-serif").attr("font-weight", "normal")	
         .text(d => `${format((d as any).data.value)}`)
         
     return window.select('.container').html().toString()

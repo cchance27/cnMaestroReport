@@ -5,42 +5,9 @@ import { getMetric } from '../cnMaestroMetricTools'
 import { perfToTable } from '../perfToTableData'
 import { isCongested } from '../congestion'
 import { fileDateTag } from '../config'
-import { genTable } from "../pdfFunctions"
-import * as fs from 'fs'
-const pdfMake = require('pdfmake')
+import { genPdfTableDDContent, generateAndSavePDF } from "../pdfFunctions"
 
 export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>) {
-    let pdfStyles = {
-        header: { fontSize: 16, bold: true },
-        subHeader: { fontSize: 12, bold: false, italics: true },
-        frontHeader: { fontSize: 24, bold: true },
-        frontDate: { fontSize: 12, italics: true },
-        pageHeader: { fontSize: 16, bold: true, color: 'lightgrey' },
-        table: {
-            margin: [0, 5, 0, 15]
-        },
-        tableHeader: {
-            bold: true,
-            fontSize: 8,
-            color: 'black'
-        },
-        tableCell: {
-            bold: false,
-            fontSize: 8,
-            color: 'black'
-        }
-    }
-
-    let pdfFonts = {
-        Roboto: {
-            normal: 'node_modules/roboto-font/fonts/Roboto/roboto-regular-webfont.ttf',
-            bold: 'node_modules/roboto-font/fonts/Roboto/roboto-bold-webfont.ttf',
-            italics: 'node_modules/roboto-font/fonts/Roboto/roboto-italic-webfont.ttf',
-            bolditalics: 'node_modules/roboto-font/fonts/Roboto/roboto-bolditalic-webfont.ttf'
-        }
-    }
-
-    
     let congestionValue = 90 // 90% usage or more is congested
 
     let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes)
@@ -66,15 +33,15 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
             ], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Top 10 Connected SMs", style: 'header' }, // New Page
             { text: "Panels with the most subscribers", style: 'subHeader'},
-            genTable(standardPerfTable.sort((a, b) => b.SMs.value - a.SMs.value).slice(0, 10), "SMs"),
+            genPdfTableDDContent(standardPerfTable.sort((a, b) => b.SMs.value - a.SMs.value).slice(0, 10), "SMs"),
 
             { text: "Top 10 Peak Downlink", style: 'header' }, // New Page
             { text: "Panels with the highest downlink throughput", style: 'subHeader'},
-            genTable(standardPerfTable.sort((a, b) => b["Download Throughput (Max)"].value - a["Download Throughput (Max)"].value).slice(0, 10), "Download Throughput (Max)"),
+            genPdfTableDDContent(standardPerfTable.sort((a, b) => b["Download Throughput (Max)"].value - a["Download Throughput (Max)"].value).slice(0, 10), "Download Throughput (Max)"),
 
             { text: "Top 10 Peak Upload", style: 'header' }, // New Page
             { text: "Panels with the highest uplink throughput", style: 'subHeader'},
-            genTable(standardPerfTable.sort((a, b) => b["Upload Throughput (Max)"].value - a["Upload Throughput (Max)"].value).slice(0, 10), "Upload Throughput (Max)"),
+            genPdfTableDDContent(standardPerfTable.sort((a, b) => b["Upload Throughput (Max)"].value - a["Upload Throughput (Max)"].value).slice(0, 10), "Upload Throughput (Max)"),
 
             // 450i Overview Page
             { columns: [
@@ -83,11 +50,11 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
                 ], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Download Congestion Overview (450/450i)", style: 'header' }, // New Page
             { text: "450/450i sectors with over 20% of downlink hours congested", style: 'subHeader'},
-            genTable(dlFrameCongestion.filter((a) => a["Download Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Download Busy Hours"].value - b["Download Busy Hours"].value)).reverse(), "Download Busy Hours"),
+            genPdfTableDDContent(dlFrameCongestion.filter((a) => a["Download Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Download Busy Hours"].value - b["Download Busy Hours"].value)).reverse(), "Download Busy Hours"),
 
             { text: "Upload Congestion Overview (450/450i)", style: 'header' },
             { text: "450/450i sectors with over 20% of uplink hours congested", style: 'subHeader'},
-            genTable(ulFrameCongestion.filter((a) => a["Upload Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Upload Busy Hours"].value - b["Upload Busy Hours"].value)).reverse(), "Upload Busy Hours"), 
+            genPdfTableDDContent(ulFrameCongestion.filter((a) => a["Upload Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Upload Busy Hours"].value - b["Upload Busy Hours"].value)).reverse(), "Upload Busy Hours"), 
 
             //450m Overview Page
             { columns: [
@@ -96,21 +63,19 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
                 ], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Download Low Bits/Hz Overview (450m)", style: 'header' }, // New Page
             { text: "450m sectors with Average download bits/hz below 4", style: 'subHeader'},
-            genTable(standardPerfTable.filter((a) => a["Download b/Hz (Avg)"].value <= 4 && a.Type.value == '450m').sort((a, b) => (a["Download b/Hz (Avg)"].value - b["Download b/Hz (Avg)"].value)).reverse() , "Download b/Hz (Avg)"),
+            genPdfTableDDContent(standardPerfTable.filter((a) => a["Download b/Hz (Avg)"].value <= 4 && a.Type.value == '450m').sort((a, b) => (a["Download b/Hz (Avg)"].value - b["Download b/Hz (Avg)"].value)).reverse() , "Download b/Hz (Avg)"),
             
             { text: "Upload Low Bits/Hz Overview (450m)", style: 'header' },
             { text: "450m sectors with Average upload bits/hz below 2", style: 'subHeader'},
-            genTable(standardPerfTable.filter((a) => a["Upload b/Hz (Avg)"].value <= 2 && a.Type.value == '450m').sort((a, b) => (a["Upload b/Hz (Avg)"].value - b["Upload b/Hz (Avg)"].value)).reverse(), "Upload b/Hz (Avg)"),
+            genPdfTableDDContent(standardPerfTable.filter((a) => a["Upload b/Hz (Avg)"].value <= 2 && a.Type.value == '450m').sort((a, b) => (a["Upload b/Hz (Avg)"].value - b["Upload b/Hz (Avg)"].value)).reverse(), "Upload b/Hz (Avg)"),
             
-        ], 
-        styles: pdfStyles,
-        pageMargins: [ 20, 20, 20, 20 ],
+        ]
     }
 
     towers.forEach(tower => {
         // Create our SVGs for this tower
         let towerSvgs = createTowerSvgs(tower, allApStatistics, allApPerformance, allApProductTypes);
-        let thisTowerApTable = genTable(perfToTable(new Map([...allApPerformance].filter(([k, v]) => v[0].tower == tower.name)), allApStatistics, allApProductTypes))
+        let thisTowerApTable = genPdfTableDDContent(perfToTable(new Map([...allApPerformance].filter(([k, v]) => v[0].tower == tower.name)), allApStatistics, allApProductTypes))
         
         // Tower Front Page
         docDefinition.content.push({ image: logoFile, alignment: 'center', margin: [0,200,0,10], pageBreak: 'before' })
@@ -128,12 +93,8 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
         towerSvgs.forEach(s => docDefinition.content.push({svg: s, width: 550, margin: [0,0,0,30]}))
     })
 
-    let printer = new pdfMake(pdfFonts);
-    const file = `${fileDateTag} - cnMaestro Tech Report.pdf`
-    let pdfDoc = printer.createPdfKitDocument(docDefinition)
-    await pdfDoc.pipe(fs.createWriteStream(file))
-    pdfDoc.end()  
-    return file
+
+    return generateAndSavePDF(docDefinition, `${fileDateTag} - cnMaestro Tech Report.pdf`)
 }
 
 function createTowerSvgs(tower: apiTower, allApStatistics: Map<string, apiStatistics[]>, allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>): string[] {
