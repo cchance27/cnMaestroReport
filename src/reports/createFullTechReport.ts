@@ -1,11 +1,11 @@
-import { logoFile, fileStartDate, fileEndDate } from '../config'
+import { logoFile, fileStartDate, fileEndDate, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
 import { graph } from '../charting'
 import { getMetric } from '../cnMaestroMetricTools'
 import { perfToTable } from '../perfToTableData'
 import { isCongested } from '../congestion'
 import { fileDateTag } from '../config'
-import { genPdfTableDDContent, generateAndSavePDF } from "../pdfFunctions"
+import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading } from "../pdfFunctions"
 
 export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>) {
     let congestionValue = 90 // 90% usage or more is congested
@@ -23,14 +23,13 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
     let docDefinition: any = {
     	content: [
             { image: logoFile, alignment: 'center', margin: [0,200,0,50] },
-            { text: 'cnMaestro Full Performance Report', style: "frontHeader", alignment: 'center' },
+            { text: stylizedHeading('cnMaestro Technical', 40), alignment: 'center' },
             { text: `${fileStartDate} - ${fileEndDate}`, style: "frontDate", alignment: 'center'},
 
             //Top 10 Overview Page
             { columns: [
-                { text: 'Top 10 Overview', style: 'pageHeader', alignment: 'left' }, 
-                { text: fileStartDate, style: 'pageHeader', alignment: 'right' }
-            ], pageBreak: 'before', margin: [0,0,0,15] },
+                { text: stylizedHeading('Top 10 Overview', 24), alignment: 'left' }, 
+                { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Top 10 Connected SMs", style: 'header' }, // New Page
             { text: "Panels with the most subscribers", style: 'subHeader'},
             genPdfTableDDContent(standardPerfTable.sort((a, b) => b.SMs.value - a.SMs.value).slice(0, 10), "SMs"),
@@ -45,9 +44,8 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
 
             // 450i Overview Page
             { columns: [
-                    { text: '450/450i Attention Areas', style: 'pageHeader', alignment: 'left' }, 
-                    { text: fileStartDate, style: 'pageHeader', alignment: 'right' }
-                ], pageBreak: 'before', margin: [0,0,0,15] },
+                { text: stylizedHeading('450/450i Attention', 24), alignment: 'left' }, 
+                { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Download Congestion Overview (450/450i)", style: 'header' }, // New Page
             { text: "450/450i sectors with over 20% of downlink hours congested", style: 'subHeader'},
             genPdfTableDDContent(dlFrameCongestion.filter((a) => a["Download Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Download Busy Hours"].value - b["Download Busy Hours"].value)).reverse(), "Download Busy Hours"),
@@ -58,9 +56,8 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
 
             //450m Overview Page
             { columns: [
-                    { text: '450m Attention Areas', style: 'pageHeader', alignment: 'left' }, 
-                    { text: fileStartDate, style: 'pageHeader', alignment: 'right' }
-                ], pageBreak: 'before', margin: [0,0,0,15] },
+                { text: stylizedHeading('450m Attention', 24), alignment: 'left' }, 
+                { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Download Low Bits/Hz Overview (450m)", style: 'header' }, // New Page
             { text: "450m sectors with Average download bits/hz below 4", style: 'subHeader'},
             genPdfTableDDContent(standardPerfTable.filter((a) => a["Download b/Hz (Avg)"].value <= 4 && a.Type.value == '450m').sort((a, b) => (a["Download b/Hz (Avg)"].value - b["Download b/Hz (Avg)"].value)).reverse() , "Download b/Hz (Avg)"),
@@ -69,7 +66,10 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
             { text: "450m sectors with Average upload bits/hz below 2", style: 'subHeader'},
             genPdfTableDDContent(standardPerfTable.filter((a) => a["Upload b/Hz (Avg)"].value <= 2 && a.Type.value == '450m').sort((a, b) => (a["Upload b/Hz (Avg)"].value - b["Upload b/Hz (Avg)"].value)).reverse(), "Upload b/Hz (Avg)"),
             
-        ]
+        ], 
+        defaultStyle: {
+            font: 'DaxOT'
+        }
     }
 
     towers.forEach(tower => {
@@ -79,15 +79,14 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
         
         // Tower Front Page
         docDefinition.content.push({ image: logoFile, alignment: 'center', margin: [0,200,0,10], pageBreak: 'before' })
-        docDefinition.content.push({ text: tower.name, style: "frontHeader", alignment: 'center', margin: [0,0,0,20] })
+        docDefinition.content.push({ text: stylizedHeading(tower.name, 32), alignment: 'center', margin: [0, 0, 0, 20] })
         docDefinition.content.push(thisTowerApTable)
        
         // Add Header
         docDefinition.content.push({
             columns: [
-                { text: tower.name, style: 'pageHeader', alignment: 'left' }, 
-                { text: fileStartDate, style: 'pageHeader', alignment: 'right' }
-            ], pageBreak: 'before', margin: [0,0,0,30] })
+                { text: stylizedHeading(tower.name, 24), alignment: 'left' }, 
+                { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] })
 
         // Add SVGs
         towerSvgs.forEach(s => docDefinition.content.push({svg: s, width: 550, margin: [0,0,0,30]}))

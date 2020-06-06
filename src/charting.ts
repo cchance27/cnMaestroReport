@@ -1,4 +1,4 @@
-import { getReadableFileSizeString, stringSort, formatNumber } from './myFunctions';
+import { getReadableThroughput, stringSort, formatNumber } from './myFunctions';
 import { JSDOM } from 'jsdom';
 import { metricEntry } from './columnsAndTypes';
 import { color, color2 } from './config';
@@ -8,6 +8,7 @@ import { getMetric } from './cnMaestroMetricTools';
 import { perfToBpHz } from './bitsPerHz';
 import { calcCongestion } from './congestion';
 import { schemeCategory10 } from 'd3';
+import { isNumber } from 'util';
 
 let moment = require('moment');
 
@@ -24,26 +25,41 @@ export function insertLinebreaks(d) {
     }
 }
 
-// [{Name: string, total: number , ...Columns...: number}
-export function stackedBarChart(data, widthVar: number, heightVar: number, valueDollars: boolean = true) {
-    console.log(`New StackedBar Chart`)
-    if (data.length == 0) { return null } // No data was given to us
-    
+ // Used for the stackedChartData type to get the unique column keys
+ export function getNonNameNonTotalKeys(data) {
+    let keys = []
+    data.forEach(twr => {
+        Object.keys(twr).forEach(k => {
+            if (keys.indexOf(k) === -1 && k != 'name' && k != 'total') { keys.push(k) }
+        })
+    })
+    return keys
+}
+
+// [{name: string, total: number , ...Columns...: number}
+export function stackedBarChart(data, widthVar: number, heightVar: number, valueDollars: boolean = true, marginLeft: number = 100, sortFieldName: string = "total", endBarTotal: boolean = true, leftAxisTotal: boolean = false, showLegend: boolean = true) {
+    console.log(`New StackedBar Chart`)    
 
     const format = valueDollars ? d3.format("$,") : d3.format(",")
-    const margin = {top: 0, right: 50, bottom: 15, left: 100},
+    const margin = {top: 0, right: 50, bottom: 15, left: marginLeft},
     width = widthVar - margin.left - margin.right,
     height = heightVar - margin.top - margin.bottom
 
     const window = d3.select((new JSDOM(`<html><head></head><body></body></html>`)).window.document)
-    let svg = window.select('body').append('div').attr('class', 'container').append("svg").attr("width", widthVar).attr("height", heightVar).append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    let svg = window.select('body').append('div').attr('class', 'container')
+        .append("svg").attr("width", widthVar).attr("height", heightVar).append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")")
     
-    data.sort((a, b) => b.total - a.total)
-
+    if (data.length == 0) { 
+        svg.append("g").text("No Data Available").attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "red").attr("font-weight", "normal")
+        return window.select('.container').html().toString()
+    } // No data was given to us
+    
+    // Sort by number if its a number in the requested field otherwise do a string sort
+    data.sort((a, b) => isNumber(data[0][sortFieldName]) ? b[sortFieldName] - a[sortFieldName] : stringSort(a[sortFieldName], b[sortFieldName]))
+    
     let y = d3.scaleBand().rangeRound([0, height]).paddingInner(0.2).align(0.2).domain(data.map(d => d.name))
     let x = d3.scaleLinear().rangeRound([0, width]).domain([0, Number(d3.max(data, d => (d as any).total))]).nice()
-    let keys = Object.keys(data[0]).filter(d => d != 'total' && d != 'name') // skip name and total
+    let keys = getNonNameNonTotalKeys(data)
     let z = d3.scaleOrdinal(schemeCategory10).domain(keys)
 
     svg.append("g").selectAll("g")
@@ -55,17 +71,27 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
             .attr("y", d => y((d as any).data.name)).attr("x", d => x(d[0]))			   
             .attr("width", d => x(d[1]) - x(d[0])).attr("height", y.bandwidth())
 
-    // Totals on end of bar
-    svg.append("g").selectAll("text")
-        .data(data).enter().append("text")
-        .text((d, i) => format((d as any).total))
-        .attr("y", (d, i) => y((d as any).name) + y.bandwidth()/2 + 3).attr("x", (d, i) =>  x((d as any).total) + 5)
-        .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")
+    if(endBarTotal) {
+        // Totals on end of bar
+        svg.append("g").selectAll("text")
+            .data(data).enter().append("text")
+            .text((d, i) => format((d as any).total))
+            .attr("y", (d, i) => y((d as any).name) + y.bandwidth()/2 + 3).attr("x", (d, i) =>  x((d as any).total) + 5)
+            .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")
+    }
 
+    if(leftAxisTotal) {
+        // Totals below name
+        svg.append("g").selectAll("text")
+            .data(data).enter().append("text")
+            .text((d, i) => format((d as any).total))
+            .attr("y", (d, i) => y((d as any).name) + y.bandwidth()/2 + 12).attr("x", -9)
+            .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal").attr("text-anchor", "end")
+    }
     // Left Axis
     svg.append("g").attr("class", "axis")
         .attr("transform", "translate(0,0)")
-        .call(d3.axisLeft(y).tickSizeOuter(0)).attr("font-family", "sans-serif")
+        .call(d3.axisLeft(y).tickSizeOuter(0).tickSizeInner(6)).attr("font-family", "sans-serif")
         .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")							
 
     // Bottom Axis
@@ -74,16 +100,81 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
         .call(d3.axisBottom(x).tickFormat(v => format(v)).tickSizeOuter(0))
         .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")	
 
-    // Legend
-    let legend = svg.append("g")
-        .attr("font-family", "sans-serif").attr("font-size", 8).attr("text-anchor", "end")
-        .selectAll("g").data(keys.slice().reverse()).enter()
-            .append("g")
-            .attr("transform", (d, i) => "translate(0," + ((height-(keys.length*16  )) + (i * 15)) + ")")
+    if (showLegend) {
+        // Legend
+        let legend = svg.append("g")
+            .attr("font-family", "sans-serif").attr("font-size", 8).attr("text-anchor", "end")
+            .selectAll("g").data(keys.slice().reverse()).enter()
+                .append("g")
+                .attr("transform", (d, i) => "translate(0," + ((height-(keys.length*16  )) + (i * 15)) + ")")
+        
+        legend.append("rect").attr("x", width - 9).attr("width", 10).attr("height", 10).attr("fill", z)
+        legend.append("text").attr("x", width - 12).attr("y", 4.5).attr("dy", "0.32em").attr("font-size", 8).text(d => (d as any))
+    }
+    return window.select('.container').html().toString()
+}
 
-    legend.append("rect").attr("x", width - 9).attr("width", 10).attr("height", 10).attr("fill", z)
-    legend.append("text").attr("x", width - 12).attr("y", 4.5).attr("dy", "0.32em").attr("font-size", 8).text(d => (d as any))
+export function gauge(value: number, radius: number, title: string, max: number = 100, startColor: string = "red", endColor: string = "green") {
+    const margin = 8 
+    const config = {
+      minAngle: -90,
+      maxAngle: 90,
+      innerTickCounterclockSpin: 0,
+      innerTickNumber: 10,
+      outerTickRingOffset: 25,
+      outerTickCounterclockSpin: 5,
+      outerTickBorderLength: 30,
+      gaugeThickness: 10
+    }
 
+    const chartRadius = radius - (margin*2)
+
+    const scale = d3.scaleLinear().domain([0, max]).range([0, 1]);
+    const innerTicks = scale.ticks(config.innerTickNumber).map((tick) => ({ value: tick, label: tick }))
+    const percentToDeg = (percent) => percent * 180 / 100
+
+    const window = d3.select((new JSDOM(`<html><head></head><body></body></html>`)).window.document)
+    let svg = window.select('body').append('div').attr('class', 'container').append('svg').attr('width', radius*2).attr('height', radius)
+    
+    // Gradient
+    const gradient = svg.append("defs")
+        .append("linearGradient").attr("id", "gradient").attr("x1", "0%").attr("y1", "0%").attr("x2", "100%").attr("y2", "100%")
+        .attr("spreadMethod", "pad").attr("gradientUnits" , "objectBoundingBox")
+    gradient.append("stop").attr("offset", "0%").attr("stop-color", startColor).attr("stop-opacity", 1).attr("offset", "10%")
+    gradient.append("stop").attr("offset", "100%").attr("stop-color", endColor).attr("stop-opacity", 1)
+    
+    // Add layer for the panel
+    const chart = svg.append('g').attr('transform', `translate(${chartRadius+margin}, ${chartRadius+margin})`);
+
+    // Gauge Arc
+    const arc = d3.arc().innerRadius(chartRadius).outerRadius(chartRadius - config.gaugeThickness).startAngle(-90 * (Math.PI/180)).endAngle(90 * (Math.PI/180))
+    chart.append('path').attr('class', "arc").style("fill", "url(#gradient)").attr("d", arc);
+
+    // Needle
+    chart.append('circle').attr('class', 'needle-center').attr('cx', 0).attr('cy', 0).attr('r', Math.ceil(chartRadius/25));
+    chart.append('line').attr('class', 'needle').style("stroke", "black").style("stroke-width", Math.ceil(chartRadius/35)).attr("x1", 0).attr("y1", 0).attr("x2", -(chartRadius + margin/2)).attr("y2", 0).attr("transform", () => `rotate(${percentToDeg(value)})`);   
+    
+    // Number ticks inside the gauge
+    const innerTicksGroup = chart.append('g').attr('class','inner-ticks');
+    innerTicksGroup.selectAll('text')
+        .data(innerTicks)
+        .enter()
+            .append('text').attr('class', 'tick')
+            .attr('font-size', Math.ceil(chartRadius/13)).attr('font-family', 'sans-serif').attr('text-anchor', 'middle')
+            .attr('transform', (d) => {
+                let newAngle = config.minAngle + (scale(d.value) * 180);
+                return `rotate(${newAngle}) translate(0, ${-(chartRadius - config.gaugeThickness*2)})`;
+            }).text((d) => d.label);
+
+    chart.append('g').append('text').attr('class', 'title')
+        .attr('x', 0).attr('y', -(chartRadius/4))
+        .text(title).attr('font-family', 'sans-serif').attr('font-size', Math.ceil(chartRadius/9)).attr('text-anchor', 'middle')
+
+    chart.append('g').append('text').attr('class', 'title')
+        .attr('x', 0).attr('y', -(chartRadius/4) - Math.ceil(chartRadius/9))
+        .text(`${value.toFixed(1)}%`).attr('font-family', 'sans-serif').attr('font-size', Math.ceil(chartRadius/6)).attr('text-anchor', 'middle')
+
+    
     return window.select('.container').html().toString()
 }
 
@@ -302,10 +393,10 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
     if (dluCongestion > pctConsideredCongested) { dluColor = "#a00b0b"; } else if (dluCongestion > 0) { dluColor = "#ce7a0c"; }
 
     bottomDetails.append("text")
-        .text(`DL Maximum: ${getReadableFileSizeString(dlsm * 1024)}`)
+        .text(`DL Maximum: ${getReadableThroughput(dlsm * 1024)}`)
         .attr("transform", `translate(30, ${fullHeight - 4})`).attr('y', '-1.4em').attr("fill", "#000").attr("text-anchor", "start").style("font-size", 8)
     bottomDetails.append("text")
-        .text(`UL Maximum: ${getReadableFileSizeString(ulsm * 1024)}`)
+        .text(`UL Maximum: ${getReadableThroughput(ulsm * 1024)}`)
         .attr("transform", `translate(30, ${fullHeight - 4})`).attr("fill", "#000").attr("text-anchor", "start").style("font-size", 8)
     bottomDetails.append("text")
         .text(`DL Efficiency (avg): ${dlbphAvg.toFixed(0)}bit/hz`)
@@ -365,7 +456,7 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
 
     // Left Axis
     axis.append('g').attr("id", "y2").attr("class", "y_axis").attr("transform", `translate(0, 0)`)
-        .call(d3.axisLeft(y).ticks(7).tickSize(5).tickSizeOuter(0).tickFormat((d: number) => getReadableFileSizeString(d * 1024)))
+        .call(d3.axisLeft(y).ticks(7).tickSize(5).tickSizeOuter(0).tickFormat((d: number) => getReadableThroughput(d * 1024)))
         .attr("fill", "#000").attr("font-size", 8)
 
     // Right Axis

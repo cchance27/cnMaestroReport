@@ -2,7 +2,7 @@ import { apiPerformance, apiStatistics } from './cnMaestroTypes';
 import { calcCongestion } from "./congestion";
 import { perfToBpHz } from './bitsPerHz';
 import { maxMetricValue, meanMetricValue } from './cnMaestroMetricTools';
-import { getReadableFileSizeString } from './myFunctions';
+import { getReadableThroughput } from './myFunctions';
 
 export function perfToTableData(data: Map<string, apiPerformance[]>, stat: Map<string, apiStatistics[]>, allApProductTypes) {
     return Array.from(data.values())
@@ -63,13 +63,13 @@ export function perfToTable(data: Map<string, apiPerformance[]>, stat: Map<strin
                 "SMs": { value: sms, formatted: sms },
                 "Type": { value: type, formatted: type },
 
-                "Download Throughput (Max)": { value: dlmax, formatted: getReadableFileSizeString(dlmax, 0) },
+                "Download Throughput (Max)": { value: dlmax, formatted: getReadableThroughput(dlmax, 0) },
                 "Download Usage (Mean)": { value: dlumean, formatted: `${dlumean.toFixed(1)}%`, alerted: type != '450m' && dlumean > 70 },
                 "Download b/Hz (Max)": { value: dlmaxbph, formatted: dlmaxbph.toFixed(0), alerted: type == '450m' && dlmaxbph <= 5},
                 "Download b/Hz (Avg)": { value: dlavgbph, formatted: dlavgbph.toFixed(0), alerted: type == '450m' && dlavgbph <= 5 },
                 "Download Busy Hours": { value: dlbusyhr, formatted: `${dlbusyhr.toFixed(0)}%`, alerted: type != '450m' && dlbusyhr >= 20},
 
-                "Upload Throughput (Max)": { value: ulmax, formatted: getReadableFileSizeString(ulmax, 0) },
+                "Upload Throughput (Max)": { value: ulmax, formatted: getReadableThroughput(ulmax, 0) },
                 "Upload Usage (Mean)": { value: ulumean, formatted: `${ulumean.toFixed(1)}%`, alerted: type != '450m' && ulumean > 70 },
                 "Upload b/Hz (Max)": { value: ulmaxbph, formatted: ulmaxbph.toFixed(0), alerted: type == '450m' && ulmaxbph <= 2},
                 "Upload b/Hz (Avg)": { value: ulavgbph, formatted: ulavgbph.toFixed(0), alerted: type == '450m' && ulavgbph <= 2 },

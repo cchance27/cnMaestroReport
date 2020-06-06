@@ -4,7 +4,6 @@ import { loginCNMaestro } from './myFunctions'
 import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics } from './cnMaestroApiCalls'
 import { createFullTechReport } from './reports/createFullTechReport'
 import { createHighLevelReport } from './reports/createHighLevelReport'
-import { generateLiteReport } from './reports/generateLiteReport'
 import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
 import { deleteOldCache } from './caching'
@@ -40,9 +39,8 @@ async function main() {
     // Generate a technical report
     attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics))
 
+    // Generate High Level report with Financials
     attachments.push(await createHighLevelReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics, allSmPackages))
-    // Generate lite report
-    //attachments.push(await generateLiteReport(allApPerformance, allSmStatistics, allSmPackages))
 
     // Send email with the report
     await sendEmailReport(attachments)

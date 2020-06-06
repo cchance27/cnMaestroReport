@@ -1,5 +1,5 @@
 import { fromEmail, toEmailAddress, fileDateTag, mailTransport, enableMail } from "./config";
-import { getReadableFileSizeString } from "./myFunctions";
+import { getReadableThroughput } from "./myFunctions";
 import * as nodemailer from 'nodemailer'
 
 export async function sendEmail(attachments: string[], content: string, title: string) {
@@ -62,8 +62,8 @@ export const generateHTMLTable = function (data, title: string, topN: number, ma
                 <td>${filtered[i].name}</td>
                 <td>${Number(filtered[i].sessions).toFixed(0)}</td>
                 <td>${filtered[i].type}</td>
-                <td>${getReadableFileSizeString(filtered[i].DLmax)}</td>
-                <td>${getReadableFileSizeString(filtered[i].ULmax)}</td>
+                <td>${getReadableThroughput(filtered[i].DLmax)}</td>
+                <td>${getReadableThroughput(filtered[i].ULmax)}</td>
                 <td>${Number(filtered[i].meanUtilDL).toFixed(1)}%</td>
                 <td>${Number(filtered[i].meanUtilUL).toFixed(1)}%</td>
                 <td>${Number(filtered[i].bphDLmax).toFixed(0)}/${Number(filtered[i].bphDLmean).toFixed(0)}</td>

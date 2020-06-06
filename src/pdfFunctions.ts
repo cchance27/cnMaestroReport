@@ -1,4 +1,4 @@
-import { pdfFonts, pdfStyles } from "./config";
+import { pdfFonts, pdfStyles, company, brandColor1, brandColor2 } from "./config";
 import * as fs from 'fs'
 const pdfMake = require('pdfmake')
 
@@ -61,30 +61,31 @@ export function genPdfTableDDContent(data: {}[], highlightFieldName: string = ""
     return result
 }
 
+export function stylizedHeading(section: string, size: number) {
+    return [
+            { text: company, font: 'DaxOTMedium', fontSize: size, color: brandColor1}, 
+            { text: ' | ', font: 'DaxOTLight', fontSize: size, color: brandColor1 }, 
+            { text: section, font: 'DaxOTLight', fontSize: size, color: brandColor2} 
+    ]
+}
 
 export async function generateAndSavePDF(docDefinition: any, filename: string){
-    try {
-        // Setup Fonts
-        let printer = new pdfMake(pdfFonts)
+    // Setup Fonts
+    let printer = new pdfMake(pdfFonts)
 
-        // Setup styles and margins
-        docDefinition['styles'] = pdfStyles
-        docDefinition['pageMargins'] = [ 20, 20, 20, 20 ]
+    // Setup styles and margins
+    docDefinition['styles'] = pdfStyles
+    docDefinition['pageMargins'] = [ 20, 20, 20, 20 ]
 
-        // Create document
-        let pdfDoc = printer.createPdfKitDocument(docDefinition)
+    // Create document
+    let pdfDoc = printer.createPdfKitDocument(docDefinition)
 
-        // Save to file
-        await pdfDoc.pipe(fs.createWriteStream(filename))
-        pdfDoc.end()  
+    // Save to file
+    await pdfDoc.pipe(fs.createWriteStream(filename))
+    pdfDoc.end()  
 
-        // Return filename if successful
-        return filename
-    } catch(err) {
-        console.error(err)
-        // Return null if something fails
-        return null
-    }
+    // Return filename if successful
+    return filename
 }
 
 export function addPdfHeading(header: string, subheader: string, doc, newPage: boolean = false) {

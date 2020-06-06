@@ -44,7 +44,7 @@ export const getContent = function (url: string) {
     })
 };
 
-export const getReadableFileSizeString = function (fileSizeInBytes: number, fixedDigits: number = 0) {
+export const getReadableThroughput = function (fileSizeInBytes: number, fixedDigits: number = 0) {
     if (!fileSizeInBytes) return "0 bps"
     var i = -1;
     var byteUnits = [' kbps', ' mbps', ' gbps', ' tbps', 'pbps', 'ebps', 'zbps', 'ybps'];
@@ -54,7 +54,19 @@ export const getReadableFileSizeString = function (fileSizeInBytes: number, fixe
     } while (fileSizeInBytes > 1024);
 
     return Math.max(fileSizeInBytes, 0.1).toFixed(fixedDigits) + byteUnits[i];
-};
+}
+
+export const getReadableDataSize = function (bytes: number, fixedDigits: number = 0) {
+    if (!bytes) return "0 bps"
+    var i = -1;
+    var byteUnits = [' KB', ' MB', ' GB', ' TB', 'PB', 'EB', 'ZB', 'YB'];
+    do {
+        bytes = bytes / 1024;
+        i++;
+    } while (bytes > 1024);
+
+    return Math.max(bytes, 0.1).toFixed(fixedDigits) + byteUnits[i];
+}
 
 
 export const loginCNMaestro = async function (clientid: string, client_secret: string, baseURL: string) {

@@ -1,4 +1,4 @@
-import { getReadableFileSizeString } from "./myFunctions";
+import { getReadableThroughput } from "./myFunctions";
 
 export class metricEntry {
     timestamp: number
@@ -21,13 +21,13 @@ export const columns = [
     },
     {
         id: 'DLmax', header: 'Downlink\n(max)', align: 'center', width: 60, cache: false, renderer: function (tb, data, draw) {
-            if (draw) { tb.pdf.fillColor('black'); return getReadableFileSizeString(data.DLmax) }
+            if (draw) { tb.pdf.fillColor('black'); return getReadableThroughput(data.DLmax) }
             return ``
         }
     },
     {
         id: 'ULmax', header: 'Uplink\n(max)', align: 'center', width: 60, cache: false, renderer: function (tb, data, draw) {
-            if (draw) { tb.pdf.fillColor('black'); return getReadableFileSizeString(data.ULmax) }
+            if (draw) { tb.pdf.fillColor('black'); return getReadableThroughput(data.ULmax) }
             return ``
         }
     },

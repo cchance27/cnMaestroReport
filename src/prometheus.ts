@@ -1,4 +1,4 @@
-import { getContent, getReadableFileSizeString } from './myFunctions'
+import { getContent, getReadableThroughput } from './myFunctions'
 import * as d3 from 'd3'
 import { JSDOM } from 'jsdom'
 
@@ -64,7 +64,7 @@ async function main() {
         .call(d3.axisBottom(x).tickFormat(function (d: number) { return new Date(d * 1000).toLocaleString() }))
 
     svg.append("g")
-        .call(d3.axisLeft(y).tickFormat(function (d: number) { return getReadableFileSizeString(d) }))
+        .call(d3.axisLeft(y).tickFormat(function (d: number) { return getReadableThroughput(d) }))
         .append("text")
         .attr("fill", "#000")
         .attr("transform", "rotate(-90)")
