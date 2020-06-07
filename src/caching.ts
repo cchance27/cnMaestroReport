@@ -1,8 +1,9 @@
 import { baseURL, fileDateTag } from './config'
-import { getCNMapi, stringSort } from './myFunctions'
+import { stringSort } from './myFunctions'
 import * as fs from 'fs'
 import { findEsnInPackages, getEipApiToObject } from './engageipApiCalls'
 import { apiSmStatistics } from './cnMaestroTypes'
+import { getCNMapi } from './cnMaestroApiCalls'
 const moment = require('moment')
 
 export function deleteOldCache(cacheDir: string = "cache") {
@@ -21,7 +22,7 @@ export function deleteOldCache(cacheDir: string = "cache") {
     oldDateFiles.map(f => fs.unlinkSync(`${cacheDir}/${f}`))
 }
 
-export async function getCachedCnMaestro(objectName: string, accessToken: string, apiUrl: string, dateBasedCache: boolean = true, cacheDir: string = "cache") {
+export async function getCachedCnMaestro(objectName: string, apiUrl: string, dateBasedCache: boolean = true, cacheDir: string = "cache") {
     // Create cache directory if it doesn't exist
     if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir) }
 
@@ -35,7 +36,7 @@ export async function getCachedCnMaestro(objectName: string, accessToken: string
     }
     else {
         console.log(`Fetching Fresh cnMaestro: ${objectName}`)
-        let values = (await getCNMapi(baseURL, apiUrl, accessToken))
+        let values = (await getCNMapi(baseURL, apiUrl))
         values = values.sort((a:any, b:any) => stringSort(a.name, b.name))
         fs.writeFileSync(cacheFile, JSON.stringify(values), 'utf8')
         console.log(`Cache Created: ${cacheFile}`)

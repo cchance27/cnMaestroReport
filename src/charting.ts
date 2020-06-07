@@ -1,9 +1,9 @@
-import { getReadableThroughput, stringSort, formatNumber } from './myFunctions';
+import { getReadableThroughput, stringSort } from './myFunctions';
 import { JSDOM } from 'jsdom';
 import { metricEntry } from './columnsAndTypes';
 import { color, color2 } from './config';
 import * as d3 from 'd3'
-import { apiPerformance, apiStatistics, apiSmStatistics } from './cnMaestroTypes';
+import { apiPerformance, apiStatistics } from './cnMaestroTypes';
 import { getMetric } from './cnMaestroMetricTools';
 import { perfToBpHz } from './bitsPerHz';
 import { calcCongestion } from './congestion';
