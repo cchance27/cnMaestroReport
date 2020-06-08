@@ -1,6 +1,7 @@
 import { getCachedCnMaestro } from "./caching"
 import { apiStatistics, apiPerformance, apiTower, apiSmStatistics } from "./cnMaestroTypes"
 import { debug, debugAmount, clientid, client_secret } from "./config"
+import fetch from 'node-fetch'
 
 export async function getAllTowers() {
     return getCachedCnMaestro('towers', '/networks/default/towers')
