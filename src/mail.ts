@@ -13,7 +13,7 @@ export async function sendEmail(attachments: string[], content: string) {
         subject: `cnMaesto Report 📊 (${fileDateTag})`,
         text: content,
         html: html,
-        attachments: attachments.map(f => ({ filename: f, path: f, cid: f }))
+        attachments: attachments.map(f => ({ filename: f.split("/")[1], path: f, cid: f.split("/")[1] }))
     }
 
     await transporter.sendMail(message)
