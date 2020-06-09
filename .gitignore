@@ -33,7 +33,6 @@ bin
 *.png
 *.jpg
 *.pdf
-package-lock.json
 cache
 config.toml
 reports
