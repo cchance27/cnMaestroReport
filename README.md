@@ -1,4 +1,5 @@
 # cnMaestroReport
+![Docker Image CI](https://github.com/cchance27/cnMaestroReport/workflows/Docker%20Image%20CI/badge.svg)
 
 Generates and emails a PDF report to administrators, overviewing all cnMaestro Sectors across the network with throughput and utilization.
 
