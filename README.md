@@ -1,5 +1,5 @@
 # cnMaestroReport
-![Docker Build](https://github.com/cchance27/cnMaestroReport/workflows/Docker%20Build/badge.svg)
+![Docker Build](https://github.com/cchance27/cnMaestroReport/workflows/Docker%20Build/badge.svg) ![Docker Automation](https://img.shields.io/docker/automated/phantam/cnmaestro-report)
 
 Generates and emails a PDF report to administrators, overviewing all cnMaestro Sectors across the network with throughput and utilization.
 
