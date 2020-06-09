@@ -92,6 +92,7 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
             return values
         } else {
             console.log(`EIP Missing: ${sm.mac}`)
+            return null
         }
     }
 }

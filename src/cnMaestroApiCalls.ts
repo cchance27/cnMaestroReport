@@ -10,7 +10,7 @@ export async function getAllTowers() {
 export async function getAllApStatistics(towers: Array<apiTower>) {
     let apStatistics: Map<string, apiStatistics[]> = new Map<string, apiStatistics[]>()
 
-    let results = await Promise.all(
+    await Promise.all(
         towers.map(async tower => {
             let stats = await getCachedCnMaestro(`${tower.name}`, `/devices/statistics?mode=ap&tower=${tower.id.split(' ').join('+')}`)
             apStatistics.set(tower.name, stats)
@@ -23,7 +23,7 @@ export async function getAllApStatistics(towers: Array<apiTower>) {
 export async function getAllSmStatistics(towers: Array<apiTower>) {
     let smStatistics: Map<string, apiSmStatistics[]> = new Map<string, apiSmStatistics[]>()
 
-    let results = await Promise.all(
+    await Promise.all(
         towers.map(async tower => {
             let stats = await getCachedCnMaestro(`${tower.name}-subs`, `/devices/statistics?mode=sm&tower=${tower.id.split(' ').join('+')}`)
             

@@ -4,7 +4,10 @@
   "description": "",
   "main": ".\\bin\\app.js",
   "scripts": {
-    "exec": "tsc && node bin\\app.js"
+    "start": "tsc && node bin\\app.js",
+    "start:dist": "node dist\\app.js",
+    "build": "tsc",
+    "build:dist": "tsc --build tsconfig.production.json" 
   },
   "author": "Chris Chance",
   "license": "ISC",

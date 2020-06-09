@@ -2,7 +2,7 @@ import { fromEmail, toEmailAddress, fileDateTag, mailTransport, enableMail } fro
 import { getReadableThroughput } from "./myFunctions";
 import * as nodemailer from 'nodemailer'
 
-export async function sendEmail(attachments: string[], content: string, title: string) {
+export async function sendEmail(attachments: string[], content: string) {
     var html=`<h2>Weekly Report attached.</h2>`
     html += content
     let transporter = nodemailer.createTransport(mailTransport, { from: fromEmail })
@@ -16,7 +16,7 @@ export async function sendEmail(attachments: string[], content: string, title: s
         attachments: attachments.map(f => ({ filename: f, path: f, cid: f }))
     }
 
-    let resp = await transporter.sendMail(message)
+    await transporter.sendMail(message)
     console.log('Message sent successfully!')
     transporter.close();
 }
@@ -26,7 +26,7 @@ export async function sendEmailReport(attachments) {
         let content = `Please find attached the Automated Report generated from cnMaestro API Data.`
 
         console.log(`Sending E-Mail Report: ${toEmailAddress.join(", ")}...`)
-        return await sendEmail(attachments, content, `CnMaestro Report (${fileDateTag})`)
+        return await sendEmail(attachments, content)
     } else {
         console.log(`Mail Disabled in Configuration`)
     }

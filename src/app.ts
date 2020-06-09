@@ -30,7 +30,7 @@ async function main() {
     let attachments: string[] = []
 
     // Generate a technical report
-    attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics))
+    attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers))
 
     // If EngageIP support is enabled we can generate a package details report and fetch package infromation from EIP.
     if (enableEip) { 

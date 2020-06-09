@@ -36,3 +36,5 @@ bin
 package-lock.json
 cache
 config.toml
+reports
+dist

@@ -8,17 +8,16 @@ let end = Math.round((new Date()).getTime() / 1000)
 let start = end - (hoursAgo * 3600)
 let step = '300'
 let query = encodeURI('rate(ifOutOctets{ifIndex="1040",instance="172.16.0.107"}[2m])*8')
-let query1 = encodeURI('rate(ifInOctets{ifIndex="1040",instance="172.16.0.107"}[2m])*8')
+//let query1 = encodeURI('rate(ifInOctets{ifIndex="1040",instance="172.16.0.107"}[2m])*8')
 
 
 async function main() {
     let line1: any = await getContent(`${url}/api/v1/query_range?query=${query}&start=${start}&end=${end}&step=${step}`)
-    let line2: any = await getContent(`${url}/api/v1/query_range?query=${query1}&start=${start}&end=${end}&step=${step}`)
+    //  Q12let line2: any = await getContent(`${url}/api/v1/query_range?query=${query1}&start=${start}&end=${end}&step=${step}`)
     let values: [[number, number]] = [[0, 0]]
 
     values.pop()
     for (let vals of JSON.parse(line1).data.result[0].values) {
-        let thisDate = new Date(vals[0] * 1000)
         values.push([vals[0], parseFloat(vals[1])])
     }
 

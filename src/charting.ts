@@ -1,27 +1,27 @@
-import { getReadableThroughput, stringSort } from './myFunctions';
-import { JSDOM } from 'jsdom';
-import { metricEntry } from './columnsAndTypes';
-import { color, color2 } from './config';
+import { getReadableThroughput, stringSort } from './myFunctions'
+import { JSDOM } from 'jsdom'
+import { metricEntry } from './columnsAndTypes'
+import { color, color2 } from './config'
 import * as d3 from 'd3'
-import { apiPerformance, apiStatistics } from './cnMaestroTypes';
-import { getMetric } from './cnMaestroMetricTools';
-import { perfToBpHz } from './bitsPerHz';
-import { calcCongestion } from './congestion';
-import { schemeCategory10 } from 'd3';
-import { isNumber } from 'util';
+import { apiPerformance, apiStatistics } from './cnMaestroTypes'
+import { getMetric } from './cnMaestroMetricTools'
+import { perfToBpHz } from './bitsPerHz'
+import { calcCongestion } from './congestion'
+import { schemeCategory10 } from 'd3'
+import { isNumber } from 'util'
 
 let moment = require('moment');
 
-export function insertLinebreaks(d) {
-    var el = d3.select(this);
-    var words = d3.select(this).text().split(' ');
+export function insertLinebreaks() {
+    var el = d3.select(this)
+    var words = d3.select(this).text().split(' ')
 
-    el.text('');
+    el.text('')
 
     for (var i = 0; i < words.length; i++) {
-        var tspan = el.append('tspan').text(words[i]);
+        var tspan = el.append('tspan').text(words[i])
         if (i > 0)
-            tspan.attr('x', 0).attr('dy', '10');
+            tspan.attr('x', 0).attr('dy', '10')
     }
 }
 
@@ -75,8 +75,8 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
         // Totals on end of bar
         svg.append("g").selectAll("text")
             .data(data).enter().append("text")
-            .text((d, i) => format((d as any).total))
-            .attr("y", (d, i) => y((d as any).name) + y.bandwidth()/2 + 3).attr("x", (d, i) =>  x((d as any).total) + 5)
+            .text((d, _) => format((d as any).total))
+            .attr("y", (d, _) => y((d as any).name) + y.bandwidth()/2 + 3).attr("x", (d, _) =>  x((d as any).total) + 5)
             .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")
     }
 
@@ -84,8 +84,8 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
         // Totals below name
         svg.append("g").selectAll("text")
             .data(data).enter().append("text")
-            .text((d, i) => format((d as any).total))
-            .attr("y", (d, i) => y((d as any).name) + y.bandwidth()/2 + 12).attr("x", -9)
+            .text((d, _) => format((d as any).total))
+            .attr("y", (d, _) => y((d as any).name) + y.bandwidth()/2 + 12).attr("x", -9)
             .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal").attr("text-anchor", "end")
     }
     // Left Axis
@@ -106,7 +106,7 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
             .attr("font-family", "sans-serif").attr("font-size", 8).attr("text-anchor", "end")
             .selectAll("g").data(keys.slice().reverse()).enter()
                 .append("g")
-                .attr("transform", (d, i) => "translate(0," + ((height-(keys.length*16  )) + (i * 15)) + ")")
+                .attr("transform", (_, i) => "translate(0," + ((height-(keys.length*16  )) + (i * 15)) + ")")
         
         legend.append("rect").attr("x", width - 9).attr("width", 10).attr("height", 10).attr("fill", z)
         legend.append("text").attr("x", width - 12).attr("y", 4.5).attr("dy", "0.32em").attr("font-size", 8).text(d => (d as any))
@@ -261,7 +261,7 @@ export function availChart(apPerfs: apiPerformance[], metricName: string, metric
     .attr("width", `${width}px`).attr("height", `${yOffset + blockHeight}px`)
 
     // Draw our rectangles for the time usage
-    let rects = svg.append("g")
+    svg.append("g")
         .selectAll(".rects")
         .data(dataset).enter()
         .append("rect")
@@ -469,19 +469,19 @@ export function graph(apPerfs: apiPerformance[], apStats: apiStatistics[], allAp
 
     // Left Legend
     let svgLegendEntryLeft = svgLegend.selectAll('.legend').data(legendOrdinal.domain()).enter().append('g')
-        .attr("transform", (d, i) => { return "translate(10, " + (height - 10 - (i * 11)) + ")"; }) // container
+        .attr("transform", (_, i) => { return "translate(10, " + (height - 10 - (i * 11)) + ")"; }) // container
     svgLegendEntryLeft.append('rect').attr('x', -5).attr('y', -4).attr('width', 80).attr('height', 10).style('fill', 'lightgrey').attr('fill-opacity', '0.6') //bg
     svgLegendEntryLeft.append('rect').attr("x", 0).attr("y", -2).attr("width", 6).attr("height", 6)
-        .style("fill", (d, i) => color[i]).style("stroke-width", 1).style("stroke", "black") //block
-    svgLegendEntryLeft.append('text').attr('transform', "translate(10, 5)").text((d, i) => d).style("text-anchor", "start").style("font-size", 8) // text
+        .style("fill", (_, i) => color[i]).style("stroke-width", 1).style("stroke", "black") //block
+    svgLegendEntryLeft.append('text').attr('transform', "translate(10, 5)").text((d, _) => d).style("text-anchor", "start").style("font-size", 8) // text
     
     // Right Legend
     let svgLegendEntryRight = svgLegend.selectAll('.legend').data(legendOrdinal1.domain()).enter().append('g')
-        .attr("transform", (d, i) => "translate(" + (width - 14) + ", " + (height - 10 - (i * 11)) + ")") // container
+        .attr("transform", (_, i) => "translate(" + (width - 14) + ", " + (height - 10 - (i * 11)) + ")") // container
     svgLegendEntryRight.append('rect').attr('x', -90).attr('y', -4).attr('width', 100).attr('height', 10).style('fill', 'lightgrey').attr('fill-opacity', '0.6') //bg
     svgLegendEntryRight.append('rect').attr("x", -5).attr("y", -2).attr("width", 6).attr("height", 6)
-        .style("fill", (d, i) => color2[i]).style("stroke-width", 1).style("stroke", "black") //block
-    svgLegendEntryRight.append('text').attr('transform', "translate(-10, 5)").text((d, i) => d).style("text-anchor", "end").style("font-size", 8) // text
+        .style("fill", (_, i) => color2[i]).style("stroke-width", 1).style("stroke", "black") //block
+    svgLegendEntryRight.append('text').attr('transform', "translate(-10, 5)").text((d, _) => d).style("text-anchor", "end").style("font-size", 8) // text
 
     svg.selectAll('#main_x g text').each(insertLinebreaks)
 
