@@ -6,6 +6,7 @@ import * as d3 from 'd3'
 import { fileDateTag } from '../config'
 import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading } from "../pdfFunctions"
 import { getReadableDataSize } from '../myFunctions'
+import * as fs from 'fs'
 
 function apTypeCounts(allApProductTypes: Map<string, string[]>) {
     let apTypeCount = {}
@@ -208,8 +209,9 @@ function apTotalDataUsage(allApPerformance: Map<string, apiPerformance[]>) {
     return dataUsage
 }
 
-export async function createHighLevelReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {}) {
-    //let standardApPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes)
+export async function createHighLevelReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {}, reportDir: string = "reports") {
+    if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir); return; }
+
     let towerNames = dtoApMacToNames(allApStatistics)
     let avgLQI = averageLQI(allSmStatistics)
     let tVals = towerValues(allSmStatistics, allSmPackages)
@@ -346,6 +348,6 @@ export async function createHighLevelReport(allApPerformance: Map<string, apiPer
         )
     })
 
-    return await generateAndSavePDF(docDefinition, `${fileDateTag} - cnMaestro High Level Report.pdf`)
+    return await generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag} - cnMaestro High Level Report.pdf`)
 }
 

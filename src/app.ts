@@ -1,11 +1,11 @@
-import { startTime, endTime }  from './config'
+import { startTime, endTime, enableEip, schedule, deleteAfterEmail }  from './config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from './cnMaestroTypes'
 import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics } from './cnMaestroApiCalls'
 import { createFullTechReport } from './reports/createFullTechReport'
 import { createHighLevelReport } from './reports/createHighLevelReport'
 import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
-import { deleteOldCache } from './caching'
+import { deleteOldCache, deleteOldPdfs } from './caching'
 
 async function main() {
     // Cleanup Old Cache Files
@@ -20,9 +20,6 @@ async function main() {
     // Grab all clientSM Statistics
     const allSmStatistics: Map<string, apiSmStatistics[]> = await getAllSmStatistics(towers)
 
-    // Grab EIP subscriber packages for the cnMaestro SMs, Returns ESN: {package: string, sku: string, amount: number}
-    const allSmPackages = await getAllSmEipPackages(allSmStatistics)
-
     // Fetch all the AP Performance data for our time period
     const allApPerformance: Map<string, apiPerformance[]> = await getAllApPerformance(allApStatistics, startTime, endTime)
 
@@ -35,12 +32,37 @@ async function main() {
     // Generate a technical report
     attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics))
 
-    // Generate High Level report with Financials
-    attachments.push(await createHighLevelReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics, allSmPackages))
+    // If EngageIP support is enabled we can generate a package details report and fetch package infromation from EIP.
+    if (enableEip) { 
+        // Grab engageip package information for each clients package
+        const allSmPackages = await getAllSmEipPackages(allSmStatistics) 
+
+        // Generate High Level report with Financials
+        attachments.push(await createHighLevelReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics, allSmPackages))
+    }
 
     // Send email with the report
     await sendEmailReport(attachments)
+
+    // Optionally cleanup old PDF files from reports directory
+    if (deleteAfterEmail) {
+        deleteOldPdfs()
+    }    
+
+    // Alert the next run
+    if (schedule || schedule != "") {
+        console.log(`Next run scheduled: ${schedule}`)
+    }
 }
 
-//TODO: report should have a nice overview of stats with perhaps mini charts, subscribers, efficiency, perhaps show the worst ones "points of concern this week"
-main()
+// If we have a schedule set, use schedule, if we don't run the report once.
+if (schedule || schedule != "") {
+    console.log(`Scheduling Run: ${schedule}...`)
+    require('node-cron').schedule(schedule, () =>  {
+        console.log('Scheduled Run...')
+        main()
+    }) 
+} else {
+    console.log('Single Run...')
+    main()
+}

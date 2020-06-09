@@ -22,6 +22,18 @@ export function deleteOldCache(cacheDir: string = "cache") {
     oldDateFiles.map(f => fs.unlinkSync(`${cacheDir}/${f}`))
 }
 
+export function deleteOldPdfs(reportDir: string = "reports") {
+    if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir); return; }
+
+    let pdfFiles = fs.readdirSync(reportDir).filter(f => f.indexOf(".pdf") > -1)
+
+    if (pdfFiles.length > 0) {
+        console.log(`Removing Old Cache ${reportDir}/*.pdf`)
+    }
+    
+    pdfFiles.map(f => fs.unlinkSync(`${reportDir}/${f}`))
+}
+
 export async function getCachedCnMaestro(objectName: string, apiUrl: string, dateBasedCache: boolean = true, cacheDir: string = "cache") {
     // Create cache directory if it doesn't exist
     if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir) }

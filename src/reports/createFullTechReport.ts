@@ -6,10 +6,13 @@ import { perfToTable } from '../perfToTableData'
 import { isCongested } from '../congestion'
 import { fileDateTag } from '../config'
 import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading } from "../pdfFunctions"
+import * as fs from 'fs'
 
-export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>) {
+export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, reportDir: string = "reports") {
+    if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir); return; }
+    
     let congestionValue = 90 // 90% usage or more is congested
-
+    
     let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes)
 
     let dlFrameCongestion = perfToTable(
@@ -93,7 +96,7 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
     })
 
 
-    return generateAndSavePDF(docDefinition, `${fileDateTag} - cnMaestro Tech Report.pdf`)
+    return generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag} - cnMaestro Tech Report.pdf`)
 }
 
 function createTowerSvgs(tower: apiTower, allApStatistics: Map<string, apiStatistics[]>, allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>): string[] {

@@ -1,0 +1,40 @@
+[report]
+days = 1
+schedule  = "0 0 1 * * *"    # Empty string or null for one run otherwise set to valid node-cron schedule
+deleteAfterEmail = false     # Delete after end events are run such as mail, otherwise the pdf's will stack up
+
+[branding]
+company = "company"
+color1 = "#ff0000"
+color2 = "#0000ff"
+logo = "c:/path/to/logo.jpg"	
+
+[mail]
+enable = true
+from = "noreply@domain.local"
+to = [
+    "Last, First <lfirst@domain.local>", 
+]
+
+[mail.transport]
+host = "mail.domain.local"
+port = 587
+secure = false
+
+[mail.transport.auth]
+user = "username"
+pass = "password"
+
+[mail.transport.tls]
+rejectUnauthorized = false
+	
+[cnmaestro]
+client_id = 'id-from-cnmaestro'
+client_secret = 'secret-from-cnmaestro'
+base_url = 'https://cnmaestro.domain.local/api/v1'
+
+[engageip]
+enable = true
+username = "owner-username"
+password = "owner-password"
+wsdlUrl = "http://engageip.domain.local/Adminportal/webservice.asmx"
