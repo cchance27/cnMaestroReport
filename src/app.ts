@@ -2,7 +2,8 @@ import { startTime, endTime, enableEip, schedule, deleteAfterEmail }  from './co
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from './cnMaestroTypes'
 import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics } from './cnMaestroApiCalls'
 import { createFullTechReport } from './reports/createFullTechReport'
-import { createHighLevelReport } from './reports/createHighLevelReport'
+import { createHighLevelNetworkReport } from './reports/createHighLevelNetworkReport'
+import { createHighLevelSiteReport } from './reports/createHighLevelSiteReport'
 import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
 import { deleteOldCache, deleteOldPdfs } from './caching'
@@ -38,7 +39,10 @@ async function main() {
         const allSmPackages = await getAllSmEipPackages(allSmStatistics) 
 
         // Generate High Level report with Financials
-        attachments.push(await createHighLevelReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics, allSmPackages))
+        attachments.push(await createHighLevelNetworkReport(allApPerformance, allSmStatistics, allSmPackages))
+        
+        // Generate High Level report with Financials
+        attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics, allSmPackages))
     }
 
     // Send email with the report

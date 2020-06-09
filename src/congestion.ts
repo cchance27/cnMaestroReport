@@ -1,6 +1,5 @@
-import { apiPerformance } from './cnMaestroTypes';
-import { getMetric } from './cnMaestroMetricTools';
-import { metricEntry } from './columnsAndTypes';
+import { apiPerformance } from './cnMaestroTypes'
+import { getMetric, metricEntry } from './cnMaestroMetricTools'
 
 export function calcCongestion(perf: apiPerformance[], field: string, saturation: number) {
     let metric = getMetric(perf, field);

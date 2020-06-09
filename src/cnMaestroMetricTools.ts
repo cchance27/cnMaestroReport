@@ -1,8 +1,12 @@
 import { apiPerformance } from './cnMaestroTypes'
-import { metricEntry } from './columnsAndTypes'
 import * as d3 from 'd3';
 
 let moment = require('moment')
+
+export class metricEntry {
+    timestamp: number
+    value: number
+}
 
 export function getMetric(perf: apiPerformance[], metric: string, radio: boolean = true): Array<metricEntry> {
     return perf.map((p: apiPerformance) => {

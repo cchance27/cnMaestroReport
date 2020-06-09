@@ -1,8 +1,8 @@
 export const stringSort = function (a: string, b: string) {
     if (a==null) {return -1}
     if (b==null) {return 1}
-    var x = a.toLowerCase();
-    var y = b.toLowerCase();
+    let x = a.toLowerCase();
+    let y = b.toLowerCase();
     if (x < y) { return -1 }
     if (x > y) { return 1 }
     return 0

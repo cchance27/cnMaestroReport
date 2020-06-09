@@ -1,5 +1,5 @@
 import { apiPerformance, apiStatistics } from './cnMaestroTypes';
-import { metricEntry } from './columnsAndTypes';
+import { metricEntry } from './cnMaestroMetricTools';
 let moment = require('moment')
 
 // Calculate a instance of apiPerformance's Bits/Hz
