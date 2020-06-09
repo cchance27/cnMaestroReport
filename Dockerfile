@@ -7,7 +7,7 @@ COPY ["./package.json", "./package-lock.json", "/app/"]
 RUN npm ci
 COPY "./" "/app/"
 
-RUN npm build:dist
+RUN npm run build:dist
 RUN npm prune --production
 
 # ===============
