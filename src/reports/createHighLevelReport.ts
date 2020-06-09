@@ -1,6 +1,6 @@
-import { logoFile, fileStartDate, fileEndDate, brandColor1, brandColor2 } from '../config'
+import { logoFile, fileStartDate, fileEndDate, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
-import { donutChart, stackedBarChart, getNonNameNonTotalKeys, gauge } from '../charting'
+import { stackedBarChart, getNonNameNonTotalKeys, gauge } from '../charting'
 import { perfToTable } from '../perfToTableData'
 import * as d3 from 'd3'
 import { fileDateTag } from '../config'
@@ -8,7 +8,7 @@ import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading } from "../pd
 import { getReadableDataSize } from '../myFunctions'
 import * as fs from 'fs'
 
-function apTypeCounts(allApProductTypes: Map<string, string[]>) {
+/* function apTypeCounts(allApProductTypes: Map<string, string[]>) {
     let apTypeCount = {}
     for (const [key, value] of allApProductTypes) {
         // TODO: There is an issue as allApProductType isnt a array it's a string for value
@@ -17,10 +17,10 @@ function apTypeCounts(allApProductTypes: Map<string, string[]>) {
     }
     let apTypeArray: {name: string, value: string}[] = Object.keys(apTypeCount).map((k, i) => { return {name: k, value: apTypeCount[k]} })
     return apTypeArray
-}
+} */
 
 // This doesn't work as it doesn't show the actual model type only that it's a pmp... maybe it's a Performance
-function smTypeCounts(allSmStatistics: Map<string, apiSmStatistics[]>) {
+/* function smTypeCounts(allSmStatistics: Map<string, apiSmStatistics[]>) {
     let smTypeCount = {}
     for (const [key, value] of allSmStatistics) {
         value.forEach(sm => {
@@ -30,13 +30,13 @@ function smTypeCounts(allSmStatistics: Map<string, apiSmStatistics[]>) {
     }
     let smTypeArray: {name: string, value: string}[] = Object.keys(smTypeCount).map((k, i) => { return {name: k, value: smTypeCount[k]} })
     return smTypeArray
-}
+} */
 
 function totalSmValue(allSmPackages) {
     // Sum up all SM Package amounts, skip the ones that are undefined as those are SM's that we couldn't find packages for.
     return Object.keys(allSmPackages)
         .reduce((agg, v) => { 
-            return allSmPackages[v] === undefined ? agg : agg + allSmPackages[v].amount
+            return !allSmPackages[v] ? agg : agg + allSmPackages[v].amount
         }, 0)
 }
 
@@ -45,7 +45,7 @@ function towerValues(allSmStatistics, allSmPackages) {
     // [{Name: string, total: number , ...Columns...: number}
 
     for (const [towerName, sms] of allSmStatistics) {
-        let totalSmVal = sms.reduce((agg, v: apiSmStatistics) => allSmPackages[v.mac] === undefined ? agg : agg + allSmPackages[v.mac].amount, 0)
+        let totalSmVal = sms.reduce((agg, v: apiSmStatistics) => !allSmPackages[v.mac] ? agg : agg + allSmPackages[v.mac].amount, 0)
         towerPackages.push({name: towerName, total: totalSmVal, "SM Package Value": totalSmVal})
     }
     return towerPackages
@@ -82,7 +82,7 @@ function packageSubscribers(allSmPackages) {
 // MAC -> NAME object creation from apStatistics
 function dtoApMacToNames(allApStatistics: Map<string, apiStatistics[]>) {
     // loop through each AP and check its first statistic to grab it's mac and name and build the new object for mac lookups of names
-    return [...allApStatistics].reduce((result, [k, v]) => { v.forEach(ap => result[ap.mac] = ap.name); return result }, {})
+    return [...allApStatistics].reduce((result, [_, v]) => { v.forEach(ap => result[ap.mac] = ap.name); return result }, {})
 }
 
 function dtoTowerValuesToStackedChartData(data) {
@@ -96,7 +96,7 @@ function dtoTowerValuesToStackedChartData(data) {
 
 function panelsOfTowerValues(thisTowerApSms: Map<string, apiSmStatistics[]>, allSmPackages, towerNames, stacked: boolean = true) {
     let APs = {}
-    thisTowerApSms.forEach((sms: apiSmStatistics[], site: string) => {
+    thisTowerApSms.forEach((sms: apiSmStatistics[], _) => {
         sms.forEach(sm => {
             let apName = towerNames[sm.ap_mac]
             let smPackage = allSmPackages[sm.mac]
@@ -125,7 +125,7 @@ function panelsOfTowerValues(thisTowerApSms: Map<string, apiSmStatistics[]>, all
 
 function packagesOfTowerValue(thisTowerApSms: Map<string, apiSmStatistics[]>, allSmPackages, towerNames, stacked: boolean = true) {
     let packages = {}
-    thisTowerApSms.forEach((sms: apiSmStatistics[], site: string) => {
+    thisTowerApSms.forEach((sms: apiSmStatistics[], _) => {
         sms.forEach(sm => {
             let apName = towerNames[sm.ap_mac]
             let smPackage = allSmPackages[sm.mac]
@@ -210,7 +210,7 @@ function apTotalDataUsage(allApPerformance: Map<string, apiPerformance[]>) {
 }
 
 export async function createHighLevelReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {}, reportDir: string = "reports") {
-    if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir); return; }
+    if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
 
     let towerNames = dtoApMacToNames(allApStatistics)
     let avgLQI = averageLQI(allSmStatistics)
@@ -285,8 +285,8 @@ export async function createHighLevelReport(allApPerformance: Map<string, apiPer
     // Each tower dashboard
     towers.forEach(tower => {
         console.log(`Generating Tower Page: ${tower.name}`)
-        let thisTowerApSms: Map<string, apiSmStatistics[]> = new Map([...allSmStatistics].filter(([k, v]) => v.length > 0 && v[0].tower == tower.name)) // Only this towers SMs
-        let thisTowerApPerformance = new Map([...allApPerformance].filter(([k, v]) => v[0].tower == tower.name))
+        let thisTowerApSms: Map<string, apiSmStatistics[]> = new Map([...allSmStatistics].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name)) // Only this towers SMs
+        let thisTowerApPerformance = new Map([...allApPerformance].filter(([_, v]) => v[0].tower == tower.name))
         let thisTowerApPerfTable = genPdfTableDDContent(perfToTable(thisTowerApPerformance, allApStatistics, allApProductTypes))
         let thisTowerAps: string[] = Array.from(thisTowerApPerformance.keys())
 
