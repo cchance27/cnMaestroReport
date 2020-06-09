@@ -1,14 +1,24 @@
 #Specify a base image
-FROM node:alpine
+FROM node:alpine as builder
 
-#Specify a working directory
-WORKDIR /usr/app
+WORKDIR /app
 
-# copy only node_modules/the-repo-package into the image because .dockerignore
-COPY ["./package.json", "./package-lock.json", "/usr/app/"]
-
-RUN npm install --production
+COPY ["./package.json", "./package-lock.json", "/app/"]
+RUN npm ci
+COPY "./" "/app/"
 
 RUN npm build:dist
+RUN npm prune --production
 
-CMD [ "npm", "run", "start:dist" ]
+# ===============
+FROM node:alpine as runtime
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+## Copy the necessary files form builder
+COPY --from=builder "/app/dist/" "/app/dist/"
+COPY --from=builder "/app/node_modules/" "/app/node_modules/"
+COPY --from=builder "/app/package.json" "/app/package.json"
+
+CMD ["npm", "run", "start:dist"]
