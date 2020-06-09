@@ -2,10 +2,10 @@
   "name": "cnmaestroreport",
   "version": "1.0.0",
   "description": "",
-  "main": ".\\bin\\app.js",
+  "main": "bin/app.js",
   "scripts": {
-    "start": "tsc && node bin\\app.js",
-    "start:dist": "node dist\\app.js",
+    "start": "tsc && node bin/app.js",
+    "start:dist": "node dist/app.js",
     "build": "tsc",
     "build:dist": "tsc --build tsconfig.production.json" 
   },
