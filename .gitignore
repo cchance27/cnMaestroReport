@@ -29,11 +29,18 @@ build/Release
 # Dependency directory
 # https://docs.npmjs.com/misc/faq#should-i-check-my-node-modules-folder-into-git
 node_modules
+
+# Output directories
 bin
+dist
+
+# Generated directories
+/reports
+cache
+
+# Logo files
 *.png
 *.jpg
-*.pdf
-cache
+
+# Our personal config
 config.toml
-reports
-dist
