@@ -16,6 +16,9 @@ FROM node:alpine as runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
+## Timezone support for "TZ=America/Anguilla"
+RUN apk add tzdata
+
 ## Copy the necessary files form builder
 COPY --from=builder "/app/dist/" "/app/dist/"
 COPY --from=builder "/app/fonts/" "/app/fonts/"
