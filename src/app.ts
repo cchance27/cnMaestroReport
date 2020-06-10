@@ -9,8 +9,6 @@ import { sendEmailReport } from './mail'
 import { deleteOldCache, deleteOldPdfs } from './caching'
 
 async function main() {
-    console.log(`cnMaestro Report Generator v(${require('root-require')('package.json').version})`)
-
     // Cleanup Old Cache Files
     deleteOldCache()
 
