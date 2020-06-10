@@ -6,6 +6,7 @@
   "scripts": {
     "start": "tsc && node bin/app.js",
     "start:dist": "node dist/app.js",
+    "start:debug": "node --inspect-brk=0.0.0.0 dist/app.js",
     "build": "tsc",
     "build:dist": "tsc --build tsconfig.production.json",
     "bump": "npm version patch"
@@ -13,7 +14,6 @@
   "author": "Chris Chance",
   "license": "ISC",
   "dependencies": {
-    "@types/node-fetch": "^2.5.7",
     "d3": "^5.9.2",
     "jsdom": "11.12.0",
     "moment": "^2.24.0",
@@ -31,6 +31,7 @@
     "@types/d3": "^5.7.2",
     "@types/jsdom": "^11.12.0",
     "@types/node": "^10.14.8",
+    "@types/node-fetch": "^2.5.7",
     "@types/pdfmake": "^0.1.13",
     "typescript": "^3.5.1"
   }
