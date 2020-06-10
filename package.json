@@ -1,6 +1,6 @@
 {
   "name": "cnmaestroreport",
-  "version": "1.1.0",
+  "version": "1.0.1",
   "description": "cnMaestro PDF Report Generation",
   "main": "bin/app.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "start:dist": "node dist/app.js",
     "build": "tsc",
     "build:dist": "tsc --build tsconfig.production.json",
-    "bump": "npm version minor && git commit -m \"bump version\""
+    "bump": "npm version patch && git commit -m \"bump version\""
   },
   "author": "Chris Chance",
   "license": "ISC",
