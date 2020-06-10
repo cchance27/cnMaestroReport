@@ -1,9 +1,10 @@
-import { baseURL, fileDateTag } from './config'
+import { baseURL } from './config'
 import { stringSort } from './myFunctions'
 import * as fs from 'fs'
 import { findEsnInPackages, getEipApiToObject } from './engageipApiCalls'
 import { apiSmStatistics } from './cnMaestroTypes'
 import { getCNMapi } from './cnMaestroApiCalls'
+import { fileDateTag } from './timeFunctions'
 const moment = require('moment')
 
 export function deleteOldCache(cacheDir: string = "cache") {
@@ -41,7 +42,7 @@ export async function getCachedCnMaestro(objectName: string, apiUrl: string, dat
     // Cleanup mac addresses for file name
     objectName = objectName.split(":").join('')
 
-    let cacheFile = dateBasedCache ? `${cacheDir}/${fileDateTag} - ${objectName}.cache` : `${cacheDir}/${objectName}.cache`
+    let cacheFile = dateBasedCache ? `${cacheDir}/${fileDateTag()} - ${objectName}.cache` : `${cacheDir}/${objectName}.cache`
     if (fs.existsSync(cacheFile)) {
         console.log(`Cache Restored: ${cacheFile}`)
         return JSON.parse(fs.readFileSync(cacheFile, 'utf8'))
@@ -63,7 +64,7 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
     // Cleanup mac addresses for file name
     let objectName = sm.mac.split(":").join('')
 
-    let cacheFile = `${cacheDir}/${fileDateTag} - ${objectName}-eip-cache.json`
+    let cacheFile = `${cacheDir}/${fileDateTag()} - ${objectName}-eip-cache.json`
 
     if (fs.existsSync(cacheFile)) {
         console.log(`Cache Restored: ${cacheFile}`)

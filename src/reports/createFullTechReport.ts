@@ -1,12 +1,12 @@
-import { logoFile, fileStartDate, fileEndDate, brandColor1 } from '../config'
+import { logoFile, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance } from '../cnMaestroTypes'
 import { graph } from '../charting'
 import { getMetric } from '../cnMaestroMetricTools'
 import { perfToTable } from '../perfToTableData'
 import { isCongested } from '../congestion'
-import { fileDateTag } from '../config'
 import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading } from "../pdfFunctions"
 import * as fs from 'fs'
+import { fileStartDate, fileEndDate, fileDateTag } from '../timeFunctions'
 
 export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
@@ -27,12 +27,12 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
     	content: [
             { image: logoFile, alignment: 'center', margin: [0,200,0,50] },
             { text: stylizedHeading('cnMaestro Technical', 40), alignment: 'center' },
-            { text: `${fileStartDate} - ${fileEndDate}`, style: "frontDate", alignment: 'center'},
+            { text: `${fileStartDate()} - ${fileEndDate()}`, style: "frontDate", alignment: 'center'},
 
             //Top 10 Overview Page
             { columns: [
                 { text: stylizedHeading('Top 10 Overview', 24), alignment: 'left' }, 
-                { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
+                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Top 10 Connected SMs", style: 'header' }, // New Page
             { text: "Panels with the most subscribers", style: 'subHeader'},
             genPdfTableDDContent(standardPerfTable.sort((a, b) => b.SMs.value - a.SMs.value).slice(0, 10), "SMs"),
@@ -48,7 +48,7 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
             // 450i Overview Page
             { columns: [
                 { text: stylizedHeading('450/450i Attention', 24), alignment: 'left' }, 
-                { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
+                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Download Congestion Overview (450/450i)", style: 'header' }, // New Page
             { text: "450/450i sectors with over 20% of downlink hours congested", style: 'subHeader'},
             genPdfTableDDContent(dlFrameCongestion.filter((a) => a["Download Busy Hours"].value >= 20 && a.Type.value != '450m').sort((a, b) => (a["Download Busy Hours"].value - b["Download Busy Hours"].value)).reverse(), "Download Busy Hours"),
@@ -60,7 +60,7 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
             //450m Overview Page
             { columns: [
                 { text: stylizedHeading('450m Attention', 24), alignment: 'left' }, 
-                { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
+                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Download Low Bits/Hz Overview (450m)", style: 'header' }, // New Page
             { text: "450m sectors with Average download bits/hz below 4", style: 'subHeader'},
             genPdfTableDDContent(standardPerfTable.filter((a) => a["Download b/Hz (Avg)"].value <= 4 && a.Type.value == '450m').sort((a, b) => (a["Download b/Hz (Avg)"].value - b["Download b/Hz (Avg)"].value)).reverse() , "Download b/Hz (Avg)"),
@@ -89,14 +89,14 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
         docDefinition.content.push({
             columns: [
                 { text: stylizedHeading(tower.name, 24), alignment: 'left' }, 
-                { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] })
+                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] })
 
         // Add SVGs
         towerSvgs.forEach(s => docDefinition.content.push({svg: s, width: 550, margin: [0,0,0,30]}))
     })
 
 
-    return generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag} - cnMaestro Tech Report.pdf`)
+    return generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag()} - cnMaestro Tech Report.pdf`)
 }
 
 function createTowerSvgs(tower: apiTower, allApStatistics: Map<string, apiStatistics[]>, allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>): string[] {

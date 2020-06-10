@@ -1,6 +1,7 @@
-import { fromEmail, toEmailAddress, fileDateTag, mailTransport, enableMail } from "./config";
+import { fromEmail, toEmailAddress, mailTransport, enableMail } from "./config";
 import { getReadableThroughput } from "./myFunctions";
 import * as nodemailer from 'nodemailer'
+import { fileDateTag } from "./timeFunctions";
 
 export async function sendEmail(attachments: string[], content: string) {
     var html=`<h2>Weekly Report attached.</h2>`
@@ -10,7 +11,7 @@ export async function sendEmail(attachments: string[], content: string) {
     let message = {
         to: toEmailAddress,
         from: fromEmail,
-        subject: `cnMaesto Report 📊 (${fileDateTag})`,
+        subject: `cnMaesto Report 📊 (${fileDateTag()})`,
         text: content,
         html: html,
         attachments: attachments.map(f => ({ filename: f.split("/")[1], path: f, cid: f.split("/")[1] }))

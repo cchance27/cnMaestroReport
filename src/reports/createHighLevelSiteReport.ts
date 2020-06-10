@@ -1,12 +1,12 @@
-import { logoFile, fileStartDate, fileEndDate, brandColor1 } from '../config'
+import { logoFile, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, getNonNameNonTotalKeys, gauge } from '../charting'
 import { perfToTable } from '../perfToTableData'
-import { fileDateTag } from '../config'
 import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, dtoApMacToNames, averageLQI, towerValues, apTotalDataUsage, panelsOfTowerValues, dtoTowerValuesToStackedChartData, packagesOfTowerValue } from "../pdfFunctions"
 import { getReadableDataSize } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
+import { fileStartDate, fileEndDate, fileDateTag } from '../timeFunctions'
 
 export async function createHighLevelSiteReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {}, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
@@ -20,7 +20,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         content: [
             { image: logoFile, alignment: 'center', margin: [0, 200, 0, 50] },
             { text: stylizedHeading('cnMaestro Site Overview', 32), alignment: 'center' },
-            { text: `${fileStartDate} - ${fileEndDate}`, style: "frontDate", alignment: 'center' },
+            { text: `${fileStartDate()} - ${fileEndDate()}`, style: "frontDate", alignment: 'center' },
         ],
         defaultStyle: {
             font: 'DaxOT'
@@ -49,7 +49,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         docDefinition.content.push({
             columns: [
                 { text: stylizedHeading(tower.name, 24), alignment: 'left' },
-                { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }
+                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }
             ], pageBreak: 'before', margin: [0, 0, 0, 30]
         }, {
             columns: [
@@ -82,5 +82,5 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
             ]
         }, { text: 'Package Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, { text: 'Revenue by package based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] }, { svg: stackedBarChart(packageRevenue, 590, packageRevenueChartHeightCount * 12 + 15, true, 120, "total", true, false, false) }, { text: 'Panel Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, { text: 'Revenue by panel based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] }, { svg: stackedBarChart(panelRevenue, 590, panelRevenueChartHeightCount * 12 + 15, true, 70, "name", true, false, false) }, { text: 'Panel Statistics', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, { text: 'General statistics for site panels during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] }, thisTowerApPerfTable)
     })
-    return await generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag} - High Level Site Report.pdf`)
+    return await generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag()} - High Level Site Report.pdf`)
 }

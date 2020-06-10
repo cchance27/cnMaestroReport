@@ -1,4 +1,4 @@
-import { startTime, endTime, enableEip, schedule, deleteAfterEmail }  from './config'
+import { enableEip, schedule, deleteAfterEmail }  from './config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from './cnMaestroTypes'
 import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics } from './cnMaestroApiCalls'
 import { createFullTechReport } from './reports/createFullTechReport'
@@ -22,7 +22,7 @@ async function main() {
     const allSmStatistics: Map<string, apiSmStatistics[]> = await getAllSmStatistics(towers)
 
     // Fetch all the AP Performance data for our time period
-    const allApPerformance: Map<string, apiPerformance[]> = await getAllApPerformance(allApStatistics, startTime, endTime)
+    const allApPerformance: Map<string, apiPerformance[]> = await getAllApPerformance(allApStatistics)
 
     // Fetch all the AP Product types
     const allApProductTypes: Map<string, string[]> = await getAllApProductTypes(allApStatistics)

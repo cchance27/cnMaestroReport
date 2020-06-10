@@ -1,11 +1,11 @@
-import { logoFile, fileStartDate, fileEndDate, brandColor1 } from '../config'
+import { logoFile, brandColor1 } from '../config'
 import { apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, gauge } from '../charting'
-import { fileDateTag } from '../config'
 import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, apTotalDataUsage, totalSmValue } from "../pdfFunctions"
 import { getReadableDataSize } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
+import { fileStartDate, fileEndDate, fileDateTag } from '../timeFunctions'
 
 export async function createHighLevelNetworkReport(allApPerformance: Map<string, apiPerformance[]>, allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {}, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) {
@@ -25,12 +25,12 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
         content: [
             { image: logoFile, alignment: 'center', margin: [0, 200, 0, 50] },
             { text: stylizedHeading('cnMaestro Network Overview', 32), alignment: 'center' },
-            { text: `${fileStartDate} - ${fileEndDate}`, style: "frontDate", alignment: 'center' },
+            { text: `${fileStartDate()} - ${fileEndDate()}`, style: "frontDate", alignment: 'center' },
             // Network Overview
             {
                 columns: [
                     { text: stylizedHeading('Network Overview', 24), alignment: 'left' },
-                    { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }
+                    { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }
                 ], pageBreak: 'before', margin: [0, 0, 0, 15]
             },
             {
@@ -70,7 +70,7 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
             {
                 columns: [
                     { text: stylizedHeading('Package Overview', 24), alignment: 'left' },
-                    { text: fileStartDate, style: 'pageDate', color: brandColor1, alignment: 'right' }
+                    { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }
                 ], pageBreak: 'before', margin: [0, 0, 0, 15]
             },
             { text: 'PMP monthly revenue by Package', alignment: 'center', style: "header", margin: [0, 15, 0, 0] },
@@ -84,5 +84,5 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
             font: 'DaxOT'
         }
     }
-    return await generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag} - High Level Network Report.pdf`)
+    return await generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag()} - High Level Network Report.pdf`)
 }

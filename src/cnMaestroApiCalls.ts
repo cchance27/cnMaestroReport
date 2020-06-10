@@ -2,6 +2,7 @@ import { getCachedCnMaestro } from "./caching"
 import { apiStatistics, apiPerformance, apiTower, apiSmStatistics } from "./cnMaestroTypes"
 import { debug, debugAmount, clientid, client_secret } from "./config"
 import fetch from 'node-fetch'
+import { startTime, endTime } from "./timeFunctions"
 
 export async function getAllTowers() {
     return getCachedCnMaestro('towers', '/networks/default/towers')
@@ -35,13 +36,13 @@ export async function getAllSmStatistics(towers: Array<apiTower>) {
     return smStatistics
 }
 
-export async function getAllApPerformance(towerApStatistics: Map<string, apiStatistics[]>, startTime, endTime) {
+export async function getAllApPerformance(towerApStatistics: Map<string, apiStatistics[]>) {
     let apPerformance: Map<string, apiPerformance[]> = new Map<string, apiPerformance[]>()
 
     for(let tower of towerApStatistics)  {
          await Promise.all(
             tower[1].map(async apStat => {
-                let perf = await getCachedCnMaestro(`${apStat.mac}-performance`, `/devices/${apStat.mac}/performance?start_time=${startTime}&stop_time=${endTime}`)
+                let perf = await getCachedCnMaestro(`${apStat.mac}-performance`, `/devices/${apStat.mac}/performance?start_time=${startTime()}&stop_time=${endTime()}`)
                 apPerformance.set(apStat.name, perf)
             })
         )
