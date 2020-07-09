@@ -48,7 +48,10 @@ class Configuration {
 		enable: string
 		username: string
     	password: string
-		wsdlUrl: string
+		wsdl_url: string
+		owner_id: string
+		report_name: string
+		answer_name: string
 	}
 
 	constructor() {
@@ -143,7 +146,10 @@ export const brandColor2 = config.branding.color2
 export const enableEip = config.engageip.enable
 export const eipUsername = config.engageip.username
 export const eipPassword = config.engageip.password
-export const eipWsdlUrl = config.engageip.wsdlUrl
+export const eipWsdlUrl = config.engageip.wsdl_url
+export const eipOwnerId = config.engageip.owner_id
+export const eipReportName = config.engageip.report_name
+export const eipAnswerField = config.engageip.answer_name
 
 export const enableMail = config.mail.enable
 export const toEmailAddress = config.mail.to

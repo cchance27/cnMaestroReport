@@ -1,7 +1,7 @@
-import { baseURL } from './config'
+import { baseURL, eipOwnerId, eipAnswerField, eipReportName } from './config'
 import { stringSort } from './myFunctions'
 import * as fs from 'fs'
-import { findEsnInPackages, getEipApiToObject } from './engageipApiCalls'
+import { getEipApiToObject } from './engageipApiCalls'
 import { apiSmStatistics } from './cnMaestroTypes'
 import { getCNMapi } from './cnMaestroApiCalls'
 import { fileDateTag } from './timeFunctions'
@@ -66,30 +66,42 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
 
     let cacheFile = `${cacheDir}/${fileDateTag()} - ${objectName}-eip-cache.json`
 
+    
     if (fs.existsSync(cacheFile)) {
-        console.log(`Cache Restored: ${cacheFile}`)
-        return JSON.parse(fs.readFileSync(cacheFile, 'utf8'))
+        let start = (new Date).getTime()
+        let fromCache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'))
+        let end = (new Date).getTime()
+
+        console.log(`Cache Restored: ${cacheFile}, Cache Benchmark: ${end-start}ms`)
+        return fromCache
     }
     else {
         let eipStyleMac = sm.mac.split(":").join("-")
-        console.log(`Fetching Fresh EIP: ${objectName}`)
 
-        // Get which user this MAC belongs to.
-        let result = await getEipApiToObject('GetUserNameFromServiceProfile', {"profileName": "User Name", "profilevalue": eipStyleMac})
-        if (result) {
-            // Grabs all the client+package+service info since theirs no way to get specific package for an profileAnswer via API
-            result = await getEipApiToObject('GetUserPackageServiceAttributeProfileQuestionList', {"username": result[0].Name[0]})
+        // Get which user this MAC belongs to and the package based on a customReport from EngageIP utilizing the GetRenderedCustomReport api call.
+        let start = (new Date).getTime()
+        let result = await getEipApiToObject('GetRenderedCustomReport', { "ownerID": eipOwnerId, "reportName": eipReportName, "filters": `${eipAnswerField}=${eipStyleMac}` })
+        let end = (new Date).getTime()
 
-            let result0 = result[0].ViewUserPackageServiceProfile[0].UserPackages[0].ViewUserPackageWithServices
-            let thePackage = findEsnInPackages(result0, eipStyleMac)
-            let values = {
-                package: thePackage.Package[0],
-                sku: thePackage.SKU[0],
-                amount: Number(thePackage.Amount[0])
+        if (result.Records) {
+            if (result.Records.ArrayOfAnyType.length) {
+                console.log(`Double EIP Package: ${sm.mac}`)
+                return null
+            }
+
+            // packageResults array is an array based on Headers data object results.Headers[] 
+            // In our report this equates to, ClientName, MacAddress (Answer), Package Name, Amount, Next Expiration
+            // TODO: Perhaps do a cleanup to pivot and create a named object with proper headings vs using the array from memory to prevent mistakes
+            let packageResults = result.Records.ArrayOfAnyType.anyType
+        
+            let values = { 
+                package: packageResults[2]._,
+                sku: packageResults[2]._,
+                amount: Number(packageResults[3]._)
             } 
 
             fs.writeFileSync(cacheFile, JSON.stringify(values), 'utf8')
-            console.log(`Cache Created: ${cacheFile}`)
+            console.log(`Cache Created: ${cacheFile}, EIP Benchmark: ${end-start}ms`)
             return values
         } else {
             console.log(`EIP Missing: ${sm.mac}`)

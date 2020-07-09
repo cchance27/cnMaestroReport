@@ -38,3 +38,6 @@ enable = true
 username = "owner-username"
 password = "owner-password"
 wsdlUrl = "http://engageip.domain.local/Adminportal/webservice.asmx"
+owner_id = "1"
+report_name = "ViewProfileAnswerPackageValue"
+answer_name = "Answer"

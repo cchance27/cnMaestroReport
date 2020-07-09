@@ -11,27 +11,6 @@ export class eipPackage {
     amount: number
 }
 
-export function findEsnInPackages(ViewUserPackageWithServices: any, ESN: string) {
-    // Loop through the very ugly ViewUserPackageWithServices data from the EIP api, 
-    // unfortunately theirs no way to get package info from just an ESN directly,
-    // so we have to walk the info, to find which package has the profile answer 
-    // we're looking for.
-
-    ESN = ESN.toLowerCase()
-    let thePackage = ViewUserPackageWithServices.filter(pack => {
-        if (pack.UserServiceWithProperties[0] == "") {return false}
-        let found = pack.UserServiceWithProperties[0].ViewUserServiceWithProperties.filter(props => {
-            if (props.UserProperties == null || props.UserProperties[0] == "") return false // No properties
-            let found = props.UserProperties[0].ViewUserProperties.filter(qa => {
-                return qa.ProfileAnswer[0].trim().toLowerCase() == ESN
-            })
-            return found.length > 0
-        })
-        return found.length > 0
-    })
-    return thePackage[0]
-}
-
 export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStatistics[]>): Promise<{}> {
     let allSmPackageDetails = {}
 
@@ -81,9 +60,9 @@ export async function getEipApiToObject(method: string, args: {}) {
     })
 
     const soapText = await soapResponse.text()
-    const parser = new xml2js.Parser()
+    const parser = new xml2js.Parser({explicitArray: false})
     let objectResponse = await require('util').promisify(parser.parseString.bind(parser))(soapText)
 
     // soap:Envelope.soap:Body[0].GetUserNameFromServiceProfileResponse[0].GetUserNameFromServiceProfileResult
-    return objectResponse["soap:Envelope"]["soap:Body"][0][method+'Response'][0][method+'Result']
+    return objectResponse["soap:Envelope"]["soap:Body"][method+'Response'][method+'Result']
 }
