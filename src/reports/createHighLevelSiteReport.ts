@@ -43,8 +43,8 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         let towerLQI = averageLQI(allSmStatistics, tower.name)
         let towerRevenue = tVals.filter(v => v.name === tower.name)[0].total
         let towerSMs = thisTowerApSms.size === 0 ? 0 : thisTowerApSms.get(tower.name).length
-        let towerSectorsDlUsage = thisTowerAps.reduce((agg, apName) => agg + dataUsage[apName].download, 0)
-        let towerSectorsUlUsage = thisTowerAps.reduce((agg, apName) => agg + dataUsage[apName].upload, 0)
+        let towerSectorsDlUsage = thisTowerAps.reduce((agg, apName) => agg + (dataUsage[apName].download || 0), 0)
+        let towerSectorsUlUsage = thisTowerAps.reduce((agg, apName) => agg + (dataUsage[apName].upload || 0), 0)
 
         docDefinition.content.push({
             columns: [

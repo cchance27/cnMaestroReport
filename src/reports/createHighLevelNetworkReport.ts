@@ -18,8 +18,8 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
     let subVals = packageSubscribers(allSmPackages)
     let dataUsage = apTotalDataUsage(allApPerformance)
     let formatDollar = d3.format("$,")
-    let networkDlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + dataUsage[apName].download, 0)
-    let networkUlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + dataUsage[apName].upload, 0)
+    let networkDlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + (dataUsage[apName].download || 0), 0)
+    let networkUlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + (dataUsage[apName].upload || 0), 0)
     
     let docDefinition: any = {
         content: [
