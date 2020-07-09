@@ -1,5 +1,5 @@
 import { baseURL, eipOwnerId, eipAnswerField, eipReportName } from './config'
-import { stringSort } from './myFunctions'
+import { stringSort, tuplePackageType } from './myFunctions'
 import * as fs from 'fs'
 import { getEipApiToObject } from './engageipApiCalls'
 import { apiSmStatistics } from './cnMaestroTypes'
@@ -57,7 +57,7 @@ export async function getCachedCnMaestro(objectName: string, apiUrl: string, dat
     }
 }
 
-export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "cache"): Promise<{package: string, sku: string, amount: number}> {
+export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "cache"): Promise<tuplePackageType> {
     // Create cache directory if it doesn't exist
     if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir) }
 
@@ -65,7 +65,6 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
     let objectName = sm.mac.split(":").join('')
 
     let cacheFile = `${cacheDir}/${fileDateTag()} - ${objectName}-eip-cache.json`
-
     
     if (fs.existsSync(cacheFile)) {
         let start = (new Date).getTime()
@@ -73,7 +72,7 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
         let end = (new Date).getTime()
 
         console.log(`Cache Restored: ${cacheFile}, Cache Benchmark: ${end-start}ms`)
-        return fromCache
+        return ["Cache", fromCache]
     }
     else {
         let eipStyleMac = sm.mac.split(":").join("-")
@@ -86,7 +85,7 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
         if (result.Records) {
             if (result.Records.ArrayOfAnyType.length) {
                 console.log(`Double EIP Package: ${sm.mac}`)
-                return null
+                return ["Double", null]
             }
 
             // packageResults array is an array based on Headers data object results.Headers[] 
@@ -102,10 +101,10 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
 
             fs.writeFileSync(cacheFile, JSON.stringify(values), 'utf8')
             console.log(`Cache Created: ${cacheFile}, EIP Benchmark: ${end-start}ms`)
-            return values
+            return ["API", values]
         } else {
             console.log(`EIP Missing: ${sm.mac}`)
-            return null
+            return ["Missing", null]
         }
     }
 }

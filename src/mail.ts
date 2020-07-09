@@ -4,7 +4,7 @@ import * as nodemailer from 'nodemailer'
 import { fileDateTag } from "./timeFunctions";
 
 export async function sendEmail(attachments: string[], content: string) {
-    var html=`<h2>Weekly Report attached.</h2>`
+    var html=`<h2>cnMaestro Reports attached.</h2>`
     html += content
     let transporter = nodemailer.createTransport(mailTransport, { from: fromEmail })
 
@@ -22,9 +22,10 @@ export async function sendEmail(attachments: string[], content: string) {
     transporter.close();
 }
 
-export async function sendEmailReport(attachments) {
+export async function sendEmailReport(attachments: Array<string>, notices: string) {
     if (enableMail) {
-        let content = `Please find attached the Automated Report generated from cnMaestro API Data.`
+        let content = `<p>Please find attached the Automated Report generated from cnMaestro API Data.</p>`
+        content += notices
 
         console.log(`Sending E-Mail Report: ${toEmailAddress.join(", ")}...`)
         return await sendEmail(attachments, content)

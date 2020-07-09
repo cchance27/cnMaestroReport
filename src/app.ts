@@ -33,20 +33,37 @@ async function main() {
     // Generate a technical report
     attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers))
 
+    let notices = "";
     // If EngageIP support is enabled we can generate a package details report and fetch package infromation from EIP.
     if (enableEip) { 
         // Grab engageip package information for each clients package
         const allSmPackages = await getAllSmEipPackages(allSmStatistics) 
 
         // Generate High Level report with Financials
-        attachments.push(await createHighLevelNetworkReport(allApPerformance, allSmStatistics, allSmPackages))
+        attachments.push(await createHighLevelNetworkReport(allApPerformance, allSmStatistics, allSmPackages.packages))
         
         // Generate High Level report with Financials
-        attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics, allSmPackages))
+        attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics, allSmPackages.packages))
+
+        if (allSmPackages.double.length > 0) {
+            notices += "<h3>EngageIP Duplicate ESNs</h3>"
+            notices += "<i>Clients might not be getting correct package, please have commercial check for incorrectly cancelled packages.</i><br/>"
+            notices += '<hr style="border: 0; height: 1px; background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));" />'
+            allSmPackages.double.forEach(mac => notices += `${mac}<br />`)
+            notices += "<br />"
+        }
+
+        if (allSmPackages.missing.length > 0) {
+            notices += "<h2>EngageIP Missing ESNs</h2>"
+            notices += "<i>Possibly disconnected recently and pending re-auth -OR- ESN in engage-ip has spaces after/before it, and should be reset to clean up..</i><br/>"
+            notices += '<hr style="border: 0; height: 1px; background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));" />'
+            allSmPackages.missing.forEach(mac => notices += `${mac}<br />`)
+
+        }
     }
 
     // Send email with the report
-    await sendEmailReport(attachments)
+    await sendEmailReport(attachments, notices)
 
     // Optionally cleanup old PDF files from reports directory
     if (deleteAfterEmail) {

@@ -1,3 +1,6 @@
+export type tuplePackageType = [string, {package: string, sku: string, amount: number}]
+export type eipSMPackageType = {packages: {}, missing: Array<string>, double: Array<string>}
+
 export const stringSort = function (a: string, b: string) {
     if (a==null) {return -1}
     if (b==null) {return 1}

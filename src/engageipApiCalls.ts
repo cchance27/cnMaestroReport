@@ -2,7 +2,7 @@ import { eipUsername, eipPassword, eipWsdlUrl, debug, debugAmount } from './conf
 import { apiSmStatistics } from './cnMaestroTypes'
 import { getCachedEipSm } from './caching'
 import fetch from 'node-fetch'
-import { EncodeXMLEscapeChars } from './myFunctions'
+import { EncodeXMLEscapeChars, eipSMPackageType } from './myFunctions'
 const xml2js = require('xml2js')
 
 export class eipPackage {
@@ -11,10 +11,13 @@ export class eipPackage {
     amount: number
 }
 
-export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStatistics[]>): Promise<{}> {
-    let allSmPackageDetails = {}
 
+export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStatistics[]>): Promise<eipSMPackageType> {
+    let allSmPackageDetails = {}
     // MAC: {package: string, sku: string, amount: number}
+    
+    let AllDoubles: Array<string> = []
+    let AllMissing: Array<string> = []
 
     let towerCount = 0
     // Loop through all SMs
@@ -24,7 +27,11 @@ export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStat
         let smCount = 0
         for(let sm of tower[1]){
             console.log(`Getting EIP Client MAC: ${sm.mac} [${smCount+1}/${tower[1].length}]`)
-            allSmPackageDetails[sm.mac] = await getCachedEipSm(sm)
+            let [status, result] = await getCachedEipSm(sm)
+            allSmPackageDetails[sm.mac] = result
+
+            if (status === "Double") { AllDoubles.push(sm.mac) }
+            if (status === "Missing") { AllMissing.push(sm.mac) }
             smCount++
         }
 
@@ -32,7 +39,7 @@ export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStat
         towerCount++
     }
 
-    return allSmPackageDetails
+    return { packages: allSmPackageDetails, double: AllDoubles, missing: AllMissing }
 
 }
 
