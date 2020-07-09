@@ -11,5 +11,7 @@ export const fileDateTag = () => reportHours() <= 24  ? fileStartDate() : `${fil
 // Some dates we use throughout the app in various formats
 export const fileStartDate = () => start().format("YYYY-MM-DD")
 export const fileEndDate = () => end().format("YYYY-MM-DD")
+export const formattedStartDateTime = () => start().format("YYYY-MM-DD HH:mm:ss")
+export const formattedEndDateTime = () => end().subtract(1, 's').format("YYYY-MM-DD HH:mm:ss")
 export const startTime = () => start().toISOString()
 export const endTime = () => end().toISOString()
