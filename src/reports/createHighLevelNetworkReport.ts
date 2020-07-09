@@ -5,7 +5,7 @@ import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageVa
 import { getReadableDataSize } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
-import { fileStartDate, fileEndDate, fileDateTag } from '../timeFunctions'
+import { fileStartDate, fileDateTag, formattedStartDateTime, formattedEndDateTime } from '../timeFunctions'
 
 export async function createHighLevelNetworkReport(allApPerformance: Map<string, apiPerformance[]>, allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {}, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) {
@@ -25,7 +25,7 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
         content: [
             { image: logoFile, alignment: 'center', margin: [0, 200, 0, 50] },
             { text: stylizedHeading('cnMaestro Network Overview', 32), alignment: 'center' },
-            { text: `${fileStartDate()} - ${fileEndDate()}`, style: "frontDate", alignment: 'center' },
+            { text: `${formattedStartDateTime()} - ${formattedEndDateTime()}`, style: "frontDate", alignment: 'center' },
             // Network Overview
             {
                 columns: [
@@ -75,10 +75,10 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
             },
             { text: 'PMP monthly revenue by Package', alignment: 'center', style: "header", margin: [0, 15, 0, 0] },
             { text: 'Revenue by package based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-            { svg: stackedBarChart(pVals, 600, pVals.length * 12 + 15, true, 180, "total", true, false, false) },
+            { svg: stackedBarChart(pVals, 600, pVals.length * 12 + 15, true, 230, "total", true, false, false) },
             { text: 'PMP subscribers per Package', alignment: 'center', style: "header", margin: [0, 15, 0, 0] },
             { text: 'Subscribers per package based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-            { svg: stackedBarChart(subVals, 600, subVals.length * 12 + 15, false, 180, "total", true, false, false) },
+            { svg: stackedBarChart(subVals, 600, subVals.length * 12 + 15, false, 230, "total", true, false, false) },
         ],
         defaultStyle: {
             font: 'DaxOT'

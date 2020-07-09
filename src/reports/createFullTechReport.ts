@@ -6,7 +6,7 @@ import { perfToTable } from '../perfToTableData'
 import { isCongested } from '../congestion'
 import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading } from "../pdfFunctions"
 import * as fs from 'fs'
-import { fileStartDate, fileEndDate, fileDateTag } from '../timeFunctions'
+import { fileStartDate, fileDateTag, formattedEndDateTime, formattedStartDateTime } from '../timeFunctions'
 
 export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
@@ -27,7 +27,7 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
     	content: [
             { image: logoFile, alignment: 'center', margin: [0,200,0,50] },
             { text: stylizedHeading('cnMaestro Technical', 40), alignment: 'center' },
-            { text: `${fileStartDate()} - ${fileEndDate()}`, style: "frontDate", alignment: 'center'},
+            { text: `${formattedStartDateTime()} - ${formattedEndDateTime()}`, style: "frontDate", alignment: 'center'},
 
             //Top 10 Overview Page
             { columns: [

@@ -6,7 +6,7 @@ import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, dtoApMacToNa
 import { getReadableDataSize } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
-import { fileStartDate, fileEndDate, fileDateTag } from '../timeFunctions'
+import { fileStartDate, fileDateTag, formattedStartDateTime, formattedEndDateTime } from '../timeFunctions'
 
 export async function createHighLevelSiteReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {}, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
@@ -20,7 +20,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         content: [
             { image: logoFile, alignment: 'center', margin: [0, 200, 0, 50] },
             { text: stylizedHeading('cnMaestro Site Overview', 32), alignment: 'center' },
-            { text: `${fileStartDate()} - ${fileEndDate()}`, style: "frontDate", alignment: 'center' },
+            { text: `${formattedStartDateTime()} - ${formattedEndDateTime()}`, style: "frontDate", alignment: 'center' },
         ],
         defaultStyle: {
             font: 'DaxOT'
@@ -80,7 +80,15 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
                     ], width: 'auto'
                 }
             ]
-        }, { text: 'Package Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, { text: 'Revenue by package based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] }, { svg: stackedBarChart(packageRevenue, 590, packageRevenueChartHeightCount * 12 + 15, true, 120, "total", true, false, false) }, { text: 'Panel Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, { text: 'Revenue by panel based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] }, { svg: stackedBarChart(panelRevenue, 590, panelRevenueChartHeightCount * 12 + 15, true, 70, "name", true, false, false) }, { text: 'Panel Statistics', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, { text: 'General statistics for site panels during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] }, thisTowerApPerfTable)
+        }, { text: 'Package Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
+           { text: 'Revenue by package based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+           { svg: stackedBarChart(packageRevenue, 590, packageRevenueChartHeightCount * 12 + 15, true, 230, "total", true, false, false) }, 
+           { text: 'Panel Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
+           { text: 'Revenue by panel based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+           { svg: stackedBarChart(panelRevenue, 590, panelRevenueChartHeightCount * 12 + 15, true, 70, "name", true, false, false) }, 
+           { text: 'Panel Statistics', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
+           { text: 'General statistics for site panels during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] }, 
+           thisTowerApPerfTable)
     })
     return await generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag()} - High Level Site Report.pdf`)
 }
