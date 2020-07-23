@@ -1,21 +1,12 @@
 import { eipUsername, eipPassword, eipWsdlUrl, debug, debugAmount } from './config'
+import { EncodeXMLEscapeChars, eipPackageResults, eipResultEnum, eipPackage } from './myFunctions'
 import { apiSmStatistics } from './cnMaestroTypes'
 import { getCachedEipSm } from './caching'
 import fetch from 'node-fetch'
-import { EncodeXMLEscapeChars, eipSMPackageType } from './myFunctions'
 const xml2js = require('xml2js')
 
-export class eipPackage {
-    package: string
-    sku: string
-    amount: number
-}
-
-
-export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStatistics[]>): Promise<eipSMPackageType> {
-    let allSmPackageDetails = {}
-    // MAC: {package: string, sku: string, amount: number}
-    
+export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStatistics[]>): Promise<eipPackageResults> {
+    let allSmPackageDetails: { [esn: string]: eipPackage } = {}
     let AllDoubles: Array<string> = []
     let AllMissing: Array<string> = []
 
@@ -26,12 +17,13 @@ export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStat
 
         let smCount = 0
         for(let sm of tower[1]){
-            console.log(`Getting EIP Client MAC: ${sm.mac} [${smCount+1}/${tower[1].length}]`)
+            console.log(`Client MAC: ${sm.mac} [${smCount+1}/${tower[1].length}]`)
             let [status, result] = await getCachedEipSm(sm)
-            allSmPackageDetails[sm.mac] = result
 
-            if (status === "Double") { AllDoubles.push(sm.mac) }
-            if (status === "Missing") { AllMissing.push(sm.mac) }
+            if (status === eipResultEnum.Success) { allSmPackageDetails[sm.mac] = result }
+            if (status === eipResultEnum.Double) { AllDoubles.push(sm.mac) }
+            if (status === eipResultEnum.Missing) { AllMissing.push(sm.mac) }
+
             smCount++
         }
 
@@ -40,7 +32,6 @@ export async function getAllSmEipPackages(allSmStatistics: Map<string, apiSmStat
     }
 
     return { packages: allSmPackageDetails, double: AllDoubles, missing: AllMissing }
-
 }
 
 export async function getEipApiToObject(method: string, args: {}) {

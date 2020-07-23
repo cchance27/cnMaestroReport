@@ -36,7 +36,7 @@ export function insertLinebreaks() {
 }
 
 // [{name: string, total: number , ...Columns...: number}
-export function stackedBarChart(data, widthVar: number, heightVar: number, valueDollars: boolean = true, marginLeft: number = 100, sortFieldName: string = "total", endBarTotal: boolean = true, leftAxisTotal: boolean = false, showLegend: boolean = true) {
+export function stackedBarChart(data: Array<{}>, widthVar: number, heightVar: number, valueDollars: boolean = true, marginLeft: number = 100, sortFieldName: string = "total", endBarTotal: boolean = true, leftAxisTotal: boolean = false, showLegend: boolean = true, showPercent: boolean = true) {
     console.log(`New StackedBar Chart`)    
 
     const format = valueDollars ? d3.format("$,") : d3.format(",")
@@ -53,10 +53,12 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
         return window.select('.container').html().toString()
     } // No data was given to us
     
+    let overallTotal: number = data.reduce((acc: number, cur: any) => { return acc + cur.total}, 0)
+
     // Sort by number if its a number in the requested field otherwise do a string sort
     data.sort((a, b) => isNumber(data[0][sortFieldName]) ? b[sortFieldName] - a[sortFieldName] : stringSort(a[sortFieldName], b[sortFieldName]))
     
-    let y = d3.scaleBand().rangeRound([0, height]).paddingInner(0.2).align(0.2).domain(data.map(d => d.name))
+    let y = d3.scaleBand().rangeRound([0, height]).paddingInner(0.2).align(0.2).domain(data.map((d: any) => d.name))
     let x = d3.scaleLinear().rangeRound([0, width]).domain([0, Number(d3.max(data, d => (d as any).total))]).nice()
     let keys = getNonNameNonTotalKeys(data)
     let z = d3.scaleOrdinal(schemeCategory10).domain(keys)
@@ -70,12 +72,17 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
             .attr("y", d => y((d as any).data.name)).attr("x", d => x(d[0]))			   
             .attr("width", d => x(d[1]) - x(d[0])).attr("height", y.bandwidth())
 
+    let thisPct = (thisTotal: number, overall: number): string => {
+        return `(${((thisTotal/overall)*100).toFixed(0)}%)`
+    }
+
     if(endBarTotal) {
         // Totals on end of bar
         svg.append("g").selectAll("text")
             .data(data).enter().append("text")
-            .text((d, _) => format((d as any).total))
-            .attr("y", (d, _) => y((d as any).name) + y.bandwidth()/2 + 3).attr("x", (d, _) =>  x((d as any).total) + 5)
+            .text((d: any, _) => `${format(d.total)} ${showPercent ? thisPct(d.total, overallTotal) : "" }`)
+            .attr("y", (d: any, _) => y(d.name) + y.bandwidth()/2 + 3)
+            .attr("x", (d: any, _) =>  x(d.total) + 5)
             .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")
     }
 
@@ -83,8 +90,8 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
         // Totals below name
         svg.append("g").selectAll("text")
             .data(data).enter().append("text")
-            .text((d, _) => format((d as any).total))
-            .attr("y", (d, _) => y((d as any).name) + y.bandwidth()/2 + 12).attr("x", -9)
+            .text((d: any, _) => format(d.total))
+            .attr("y", (d: any, _) => y(d.name) + y.bandwidth()/2 + 12).attr("x", -9)
             .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal").attr("text-anchor", "end")
     }
     // Left Axis
@@ -96,7 +103,7 @@ export function stackedBarChart(data, widthVar: number, heightVar: number, value
     // Bottom Axis
     svg.append("g").attr("class", "axis")
         .attr("transform", "translate(0,"+height+")")				
-        .call(d3.axisBottom(x).tickFormat(v => format(v)).tickSizeOuter(0))
+        .call(d3.axisBottom(x).tickFormat(v => format(v)).tickSizeOuter(0).ticks(5))
         .attr("font-family", "sans-serif").attr("font-size", 8).attr("fill", "#000").attr("font-weight", "normal")	
 
     if (showLegend) {
@@ -177,22 +184,27 @@ export function gauge(value: number, radius: number, title: string, max: number 
     return window.select('.container').html().toString()
 }
 
-export function donutChart(data: {name: string, value: string}[], diameter: number, valueDollars: boolean = true) {
+export function donutChart(data: {name: string, value: number}[], diameter: number, valueDollars: boolean = true, pieChart: boolean = false) {
     console.log(`New Donut Chart`)
 
     const format = valueDollars ? d3.format("$,") : d3.format(",")
     const color = d3.scaleOrdinal(d3.schemeCategory10)
     const window = d3.select((new JSDOM(`<html><head></head><body></body></html>`)).window.document)
     const radius = diameter/2
-    
+    const innerRadius = pieChart ? 0 : radius * 0.4
+    const textRadius = (radius-innerRadius)/2
+
     let svg = window.select('body').append('div').attr('class', 'container').append("svg").attr("width", diameter).attr("height", diameter)
-
     let g = svg.append("g").attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
-
     let pie = d3.pie().sort(null).value(d => (d as any).value);
     
-    let path = d3.arc().outerRadius(radius).innerRadius(radius * 0.5);
-    let label = d3.arc().outerRadius(radius * 0.70).innerRadius(radius * 0.70);
+    let path = d3.arc().outerRadius(radius).innerRadius(innerRadius)
+    let label = d3.arc().outerRadius(textRadius).innerRadius(textRadius)
+
+    let total = data.reduce((agg, cur) => agg + cur.value, 0)
+    let thisPct = (thisTotal: number, overall: number): string => {
+        return `(${((thisTotal/overall)*100).toFixed(0)}%)`
+    }
 
     let arc = g.selectAll(".arc")
         .data(pie((data as any))).enter()
@@ -204,13 +216,18 @@ export function donutChart(data: {name: string, value: string}[], diameter: numb
 
     arc.append("text")
         .attr("transform", d => "translate(" + label.centroid((d as any)) + ")")
-        .style("font-size", 8).attr("dy", "-0.3em").style("text-anchor", "middle").attr("font-family", "sans-serif").attr("font-weight", "bold")	
+        .style("font-size", 8).attr("dy", "-10px").style("text-anchor", "middle").attr("font-family", "sans-serif").attr("font-weight", "bold")	
         .text(d => (d as any).data.name)
     
     arc.append("text")
         .attr("transform", d => "translate(" + label.centroid((d as any)) + ")")
-        .style("font-size", 8).attr("dy", "1em").style("text-anchor", "middle").attr("font-family", "sans-serif").attr("font-weight", "normal")	
+        .style("font-size", 8).attr("dy", "0px").style("text-anchor", "middle").attr("font-family", "sans-serif").attr("font-weight", "normal")	
         .text(d => `${format((d as any).data.value)}`)
+
+    arc.append("text")
+        .attr("transform", d => "translate(" + label.centroid((d as any)) + ")")
+        .style("font-size", 8).attr("dy", "10px").style("text-anchor", "middle").attr("font-family", "sans-serif").attr("font-weight", "normal")	
+        .text(d => `${thisPct(d.value, total)}`)
         
     return window.select('.container').html().toString()
 }

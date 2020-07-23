@@ -8,6 +8,7 @@ import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
 import { deleteOldCache, deleteOldPdfs } from './caching'
 
+
 async function main() {
     // Cleanup Old Cache Files
     deleteOldCache()
@@ -43,7 +44,7 @@ async function main() {
         attachments.push(await createHighLevelNetworkReport(allApPerformance, allSmStatistics, allSmPackages.packages))
         
         // Generate High Level report with Financials
-        attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers,allSmStatistics, allSmPackages.packages))
+        attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers, allSmStatistics, allSmPackages.packages))
 
         if (allSmPackages.double.length > 0) {
             notices += "<h3>EngageIP Duplicate ESNs</h3>"
@@ -54,7 +55,7 @@ async function main() {
         }
 
         if (allSmPackages.missing.length > 0) {
-            notices += "<h2>EngageIP Missing ESNs</h2>"
+            notices += "<h3>EngageIP Missing ESNs</h3>"
             notices += "<i>Possibly disconnected recently and pending re-auth -OR- ESN in engage-ip has spaces after/before it, and should be reset to clean up..</i><br/>"
             notices += '<hr style="border: 0; height: 1px; background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));" />'
             allSmPackages.missing.forEach(mac => notices += `${mac}<br />`)

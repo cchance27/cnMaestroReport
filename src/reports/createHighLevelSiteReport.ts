@@ -2,13 +2,13 @@ import { logoFile, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, getNonNameNonTotalKeys, gauge } from '../charting'
 import { perfToTable } from '../perfToTableData'
-import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, dtoApMacToNames, averageLQI, towerValues, apTotalDataUsage, panelsOfTowerValues, dtoTowerValuesToStackedChartData, packagesOfTowerValue } from "../pdfFunctions"
-import { getReadableDataSize } from '../myFunctions'
+import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, dtoApMacToNames, averageLQI, towerValues, apTotalDataUsage, panelsOfTowerValues, dtoTowerValuesToStackedChartData, packagesOfTowerValue, busResCountAndValues } from "../pdfFunctions"
+import { getReadableDataSize, eipPackage } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
 import { fileStartDate, fileDateTag, formattedStartDateTime, formattedEndDateTime } from '../timeFunctions'
 
-export async function createHighLevelSiteReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {}, reportDir: string = "reports") {
+export async function createHighLevelSiteReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
 
     let towerNames = dtoApMacToNames(allApStatistics)
@@ -45,6 +45,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         let towerSMs = thisTowerApSms.size === 0 ? 0 : thisTowerApSms.get(tower.name).length
         let towerSectorsDlUsage = thisTowerAps.reduce((agg, apName) => agg + (dataUsage[apName].download || 0), 0)
         let towerSectorsUlUsage = thisTowerAps.reduce((agg, apName) => agg + (dataUsage[apName].upload || 0), 0)
+        let [busResCounts, busResValues] = busResCountAndValues(thisTowerApSms.get(tower.name), allSmPackages)
 
         docDefinition.content.push({
             columns: [
@@ -80,15 +81,29 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
                     ], width: 'auto'
                 }
             ]
-        }, { text: 'Package Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
-           { text: 'Revenue by package based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-           { svg: stackedBarChart(packageRevenue, 590, packageRevenueChartHeightCount * 12 + 15, true, 230, "total", true, false, false) }, 
-           { text: 'Panel Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
-           { text: 'Revenue by panel based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-           { svg: stackedBarChart(panelRevenue, 590, panelRevenueChartHeightCount * 12 + 15, true, 70, "name", true, false, false) }, 
-           { text: 'Panel Statistics', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
-           { text: 'General statistics for site panels during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] }, 
-           thisTowerApPerfTable)
+        },
+        { columns: [
+            { stack: [
+                { text: 'Subscribers by Type', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
+                { text: 'SMs by Subscriber Types', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                { svg: stackedBarChart(busResCounts, 275, busResCounts.length * 12 + 15, false, 55, "name", true, false, false) }, 
+            ] },
+            { stack: [
+                { text: 'Subscribers by Value', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
+                { text: 'Revenue by Subscriber Types', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                { svg: stackedBarChart(busResValues, 275, busResValues.length * 12 + 15, true, 55, "name", true, false, false) }, 
+            ]}
+        ]},
+        { text: 'Package Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
+        { text: 'Revenue by package based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+        { svg: stackedBarChart(packageRevenue, 580, packageRevenueChartHeightCount * 12 + 15, true, 230, "total", true, false, false) }, 
+        { text: 'Panel Monthly Revenue', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
+        { text: 'Revenue by panel based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+        { svg: stackedBarChart(panelRevenue, 580, panelRevenueChartHeightCount * 12 + 15, true, 70, "name", true, false, false) }, 
+
+        { text: 'Panel Statistics', alignment: 'center', style: "header", margin: [0, 15, 0, 0] }, 
+        { text: 'General statistics for site panels during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] }, 
+        thisTowerApPerfTable)
     })
     return await generateAndSavePDF(docDefinition, `${reportDir}/${fileDateTag()} - High Level Site Report.pdf`)
 }

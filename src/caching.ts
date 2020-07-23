@@ -1,5 +1,5 @@
 import { baseURL, eipOwnerId, eipAnswerField, eipReportName } from './config'
-import { stringSort, tuplePackageType } from './myFunctions'
+import { stringSort, eipPackage, eipResultEnum } from './myFunctions'
 import * as fs from 'fs'
 import { getEipApiToObject } from './engageipApiCalls'
 import { apiSmStatistics } from './cnMaestroTypes'
@@ -57,7 +57,7 @@ export async function getCachedCnMaestro(objectName: string, apiUrl: string, dat
     }
 }
 
-export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "cache"): Promise<tuplePackageType> {
+export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "cache"): Promise<[eipResultEnum, eipPackage]> {
     // Create cache directory if it doesn't exist
     if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir) }
 
@@ -71,8 +71,8 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
         let fromCache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'))
         let end = (new Date).getTime()
 
-        console.log(`Cache Restored: ${cacheFile}, Cache Benchmark: ${end-start}ms`)
-        return ["Cache", fromCache]
+        console.log(`Cache: ${end-start}ms`)
+        return [eipResultEnum.Success, fromCache]
     }
     else {
         let eipStyleMac = sm.mac.split(":").join("-")
@@ -85,7 +85,7 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
         if (result.Records) {
             if (result.Records.ArrayOfAnyType.length) {
                 console.log(`Double EIP Package: ${sm.mac}`)
-                return ["Double", null]
+                return [eipResultEnum.Double, null]
             }
 
             // packageResults array is an array based on Headers data object results.Headers[] 
@@ -94,17 +94,21 @@ export async function getCachedEipSm(sm: apiSmStatistics, cacheDir: string = "ca
             let packageResults = result.Records.ArrayOfAnyType.anyType
         
             let values = { 
-                package: packageResults[2]._,
-                sku: packageResults[2]._,
-                amount: Number(packageResults[3]._)
+                account: packageResults[0]._,
+                owner: packageResults[1]._,
+                package: packageResults[3]._,
+                sku: packageResults[3]._,
+                amount: Number(packageResults[4]._), 
+                expDate: packageResults[5]._,
+                isBusiness: Boolean(packageResults[6]._ === 'Yes')
             } 
 
             fs.writeFileSync(cacheFile, JSON.stringify(values), 'utf8')
-            console.log(`Cache Created: ${cacheFile}, EIP Benchmark: ${end-start}ms`)
-            return ["API", values]
+            console.log(`EIP: ${end-start}ms`)
+            return [eipResultEnum.Success, values]
         } else {
             console.log(`EIP Missing: ${sm.mac}`)
-            return ["Missing", null]
+            return [eipResultEnum.Missing, null]
         }
     }
 }

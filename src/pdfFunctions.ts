@@ -151,6 +151,33 @@ export function dtoTowerValuesToStackedChartData(data) {
     return results
 }
 
+export function busResCountAndValues(towerSms, allSmPackages) {
+    let resCount = 0, resValue = 0
+    let busCount = 0, busValue = 0
+    let total = 0, found = 0
+    if (towerSms) {
+        total = towerSms.length
+        towerSms.forEach(sm => {
+            if (allSmPackages[sm.mac]) {
+                found += 1
+                if (allSmPackages[sm.mac].isBusiness) {
+                    busCount += 1
+                    busValue += allSmPackages[sm.mac].amount
+                } else {
+                    resCount += 1
+                    resValue += allSmPackages[sm.mac].amount
+                }
+            }
+        })
+    }
+    let busResCounts = [{ name: 'Business', total: busCount, SMs: busCount }, { name: 'Residential', total: resCount, SMs: resCount }]
+    let busResValues = [{ name: 'Business', total: busValue, Value: busValue }, { name: 'Residential', total: resValue, Value: resValue }]
+    if (found < total) {
+        busResCounts.push({ name: 'Unknown', total: total-found, SMs: total-found })
+    }
+    return [busResCounts, busResValues]
+}
+
 export function panelsOfTowerValues(thisTowerApSms: Map<string, apiSmStatistics[]>, allSmPackages, towerNames, stacked: boolean = true) {
     let APs = {}
     thisTowerApSms.forEach((sms: apiSmStatistics[], _) => {
@@ -215,7 +242,7 @@ export function averageLQI(allSmStatistics: Map<string, apiSmStatistics[]>, towe
     let lqi_cnt: number = 0
 
     for (const [tower, sms] of allSmStatistics) {
-        if (towerName == "" || tower == towerName) {
+        if (towerName === "" || tower === towerName) {
             sms.forEach(sm => {
                 ul_lqi += sm.radio.ul_lqi
                 dl_lqi += sm.radio.dl_lqi

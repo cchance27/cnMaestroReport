@@ -1,6 +1,23 @@
-export type tuplePackageType = [string, {package: string, sku: string, amount: number}]
-export type eipSMPackageType = {packages: {}, missing: Array<string>, double: Array<string>}
+export type eipPackage = {
+    account: string,
+    owner: string,
+    package: string,
+    sku: string,
+    amount: number,
+    expDate: string,
+    isBusiness: boolean
+}
+export type eipPackageResults = {
+    packages: { [esn: string]: eipPackage }, 
+    missing: Array<string>, 
+    double: Array<string>
+}
 
+export enum eipResultEnum {
+    Success,
+    Double,
+    Missing
+}
 export const stringSort = function (a: string, b: string) {
     if (a==null) {return -1}
     if (b==null) {return 1}
