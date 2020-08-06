@@ -292,3 +292,27 @@ export function apTotalDataUsage(allApPerformance: Map<string, apiPerformance[]>
 
     return dataUsage
 }
+
+// Check how many subscribers are on panels that are 5ghz vs 3ghz
+export function smCountByFrequency(allApStatistics: Map<string, apiStatistics[]>) {
+    let r5ghz = 0, r3ghz = 0;
+    allApStatistics.forEach((v, _) => v.forEach(sector => {
+    if (sector.connected_sms > 0 && sector.radio.frequency > 0) { 
+       if (sector.radio.frequency > 4000) {r5ghz+=sector.connected_sms} else {r3ghz+=sector.connected_sms}
+    }
+    }));
+
+    return [{ name: "3 Ghz", value: r3ghz}, {name: "5 Ghz", value: r5ghz}]
+}
+
+// Check how many subscribers are on panels that are 5ghz vs 3ghz
+export function apCountByFrequency(allApStatistics: Map<string, apiStatistics[]>) {
+    let r5ghz = 0, r3ghz = 0;
+    allApStatistics.forEach((v, _) => v.forEach(sector => {
+    if (sector.connected_sms > 0 && sector.radio.frequency > 0) { 
+       if (sector.radio.frequency > 4000) {r5ghz++} else {r3ghz++}
+    }
+    }));
+
+    return [{ name: "3 Ghz", value: r3ghz}, {name: "5 Ghz", value: r5ghz}]
+}

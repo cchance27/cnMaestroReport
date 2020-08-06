@@ -1,10 +1,10 @@
 import { logoFile, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance } from '../cnMaestroTypes'
-import { graph } from '../charting'
+import { graph, donutChart } from '../charting'
 import { getMetric } from '../cnMaestroMetricTools'
 import { perfToTable } from '../perfToTableData'
 import { isCongested } from '../congestion'
-import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading } from "../pdfFunctions"
+import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, smCountByFrequency, apCountByFrequency } from "../pdfFunctions"
 import * as fs from 'fs'
 import { fileStartDate, fileDateTag, formattedEndDateTime, formattedStartDateTime } from '../timeFunctions'
 
@@ -84,7 +84,19 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
         docDefinition.content.push({ image: logoFile, alignment: 'center', margin: [0,200,0,10], pageBreak: 'before' })
         docDefinition.content.push({ text: stylizedHeading(tower.name, 32), alignment: 'center', margin: [0, 0, 0, 20] })
         docDefinition.content.push(thisTowerApTable)
-       
+        docDefinition.content.push({
+            columns: [
+                { stack: [{ text: 'SMs by Frequency', style: 'header', alignment: 'center' },
+                          { text: 'Based on this Tower', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                          { svg: donutChart(smCountByFrequency(new Map([...allApStatistics].filter(([_, v]) => v[0].tower == tower.name))), 160, false, true), alignment: 'center' }]
+                },
+                { stack: [{ text: 'APs by Frequency', style: 'header', alignment: 'center' },
+                          { text: 'Based on this Tower', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                          { svg: donutChart(apCountByFrequency(new Map([...allApStatistics].filter(([_, v]) => v[0].tower == tower.name))), 160, false, true), alignment: 'center' }]
+                 },
+            ], margin: [0, 15, 0, 0]
+        })
+
         // Add Header
         docDefinition.content.push({
             columns: [

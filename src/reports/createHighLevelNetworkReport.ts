@@ -1,7 +1,7 @@
 import { logoFile, brandColor1 } from '../config'
-import { apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
+import { apiPerformance, apiSmStatistics, apiStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, gauge, donutChart } from '../charting'
-import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, apTotalDataUsage, totalSmValue } from "../pdfFunctions"
+import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, apTotalDataUsage, totalSmValue, smCountByFrequency, apCountByFrequency } from "../pdfFunctions"
 import { getReadableDataSize, eipPackage } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
@@ -103,7 +103,7 @@ function ownerPageGenerator(ownerName: string, allSmPackages: {[esn: string]: ei
     return ownerPage
 }
 
-export async function createHighLevelNetworkReport(allApPerformance: Map<string, apiPerformance[]>, allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, reportDir: string = "reports") {
+export async function createHighLevelNetworkReport(allApPerformance: Map<string, apiPerformance[]>, allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, allApStatistics: Map<string, apiStatistics[]>, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) {
         fs.mkdirSync(reportDir)
     }
@@ -167,6 +167,7 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
             { text: 'PMP monthly revenue by Tower', alignment: 'center', style: "header", margin: [0, 15, 0, 0] },
             { text: 'Revenue by tower based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
             { svg: stackedBarChart(tVals, 580, tVals.length * 12 + 15, true, 100, "total", true, false, false)},
+            
             // Comparisons
             {
                 columns: [
@@ -202,6 +203,19 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
                     }
                 ]
             },
+            {
+                columns: [
+                    { stack: [{ text: 'SMs by Frequency', style: 'header', alignment: 'center' },
+                              { text: 'Based on this Tower', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                              { svg: donutChart(smCountByFrequency(allApStatistics), 160, false, true), alignment: 'center' }]
+                    },
+                    { stack: [{ text: 'APs by Frequency', style: 'header', alignment: 'center' },
+                              { text: 'Based on this Tower', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                              { svg: donutChart(apCountByFrequency(allApStatistics), 160, false, true), alignment: 'center' }]
+                     },
+                ], margin: [0, 15, 0, 0]
+            },
+
             // Package overview page
             {
                 columns: [
