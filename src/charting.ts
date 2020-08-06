@@ -186,6 +186,7 @@ export function gauge(value: number, radius: number, title: string, max: number 
 
 export function donutChart(data: {name: string, value: number}[], diameter: number, valueDollars: boolean = true, pieChart: boolean = false) {
     console.log(`New Donut Chart`)
+    data = data.sort((a, b) => b.value - a.value)
 
     const format = valueDollars ? d3.format("$,") : d3.format(",")
     const color = d3.scaleOrdinal(d3.schemeCategory10)
