@@ -1,8 +1,8 @@
 import { logoFile, brandColor1 } from '../config'
-import { apiPerformance, apiSmStatistics, apiStatistics } from '../cnMaestroTypes'
+import { apiSmStatistics, apiStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, gauge, donutChart } from '../charting'
-import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, apTotalDataUsage, totalSmValue, smCountByFrequency, apCountByFrequency } from "../pdfFunctions"
-import { getReadableDataSize, eipPackage } from '../myFunctions'
+import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, totalSmValue, smCountByFrequency, apCountByFrequency } from "../pdfFunctions"
+import { eipPackage } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
 import { fileStartDate, fileDateTag, formattedStartDateTime, formattedEndDateTime } from '../timeFunctions'
@@ -103,7 +103,7 @@ function ownerPageGenerator(ownerName: string, allSmPackages: {[esn: string]: ei
     return ownerPage
 }
 
-export async function createHighLevelNetworkReport(allApPerformance: Map<string, apiPerformance[]>, allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, allApStatistics: Map<string, apiStatistics[]>, reportDir: string = "reports") {
+export async function createHighLevelNetworkReport(allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, allApStatistics: Map<string, apiStatistics[]>, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) {
         fs.mkdirSync(reportDir)
     }
@@ -112,10 +112,10 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
     let tVals = towerValues(allSmStatistics, allSmPackages)
     let pVals = packageValues(allSmPackages)
     let subVals = packageSubscribers(allSmPackages)
-    let dataUsage = apTotalDataUsage(allApPerformance)
+    //let dataUsage = apTotalDataUsage(allApPerformance)
     let formatDollar = d3.format("$,")
-    let networkDlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + (dataUsage[apName].download || 0), 0)
-    let networkUlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + (dataUsage[apName].upload || 0), 0)
+    //let networkDlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + (dataUsage[apName].download || 0), 0)
+    //let networkUlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + (dataUsage[apName].upload || 0), 0)
 
     let [ownersCount, ownersValue] = ownerCountsAndValues(allSmPackages)
     let [busResCount, busResValue] = smBusResCountsAndValues(allSmPackages)
@@ -143,7 +143,7 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
                         { text: ' ' },
                         { text: 'Total Download', style: 'header', alignment: 'center' },
                         { text: 'DL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                        { text: `${getReadableDataSize(networkDlUsage, 2)}`, style: 'subheader', alignment: 'center' }
+                        { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(networkDlUsage, 2)}
                         ], width: "auto"
                     },
                     {
@@ -153,7 +153,7 @@ export async function createHighLevelNetworkReport(allApPerformance: Map<string,
                         { text: ' ' },
                         { text: 'Total Upload', style: 'header', alignment: 'center' },
                         { text: 'UL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                        { text: `${getReadableDataSize(networkUlUsage, 2)}`, style: 'subheader', alignment: 'center' }
+                        { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(networkUlUsage, 2)}
                         ], width: "*"
                     },
                     {

@@ -2,8 +2,8 @@ import { logoFile, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, getNonNameNonTotalKeys, gauge } from '../charting'
 import { perfToTable } from '../perfToTableData'
-import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, dtoApMacToNames, averageLQI, towerValues, apTotalDataUsage, panelsOfTowerValues, dtoTowerValuesToStackedChartData, packagesOfTowerValue, busResCountAndValues } from "../pdfFunctions"
-import { getReadableDataSize, eipPackage } from '../myFunctions'
+import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, dtoApMacToNames, averageLQI, towerValues, panelsOfTowerValues, dtoTowerValuesToStackedChartData, packagesOfTowerValue, busResCountAndValues } from "../pdfFunctions"
+import { eipPackage } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
 import { fileStartDate, fileDateTag, formattedStartDateTime, formattedEndDateTime } from '../timeFunctions'
@@ -13,7 +13,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
 
     let towerNames = dtoApMacToNames(allApStatistics)
     let tVals = towerValues(allSmStatistics, allSmPackages)
-    let dataUsage = apTotalDataUsage(allApPerformance)
+    //let dataUsage = apTotalDataUsage(allApPerformance)
     let formatDollar = d3.format("$,")
 
     let docDefinition: any = {
@@ -33,7 +33,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         let thisTowerApSms: Map<string, apiSmStatistics[]> = new Map([...allSmStatistics].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name)) // Only this towers SMs
         let thisTowerApPerformance = new Map([...allApPerformance].filter(([_, v]) => v[0].tower == tower.name))
         let thisTowerApPerfTable = genPdfTableDDContent(perfToTable(thisTowerApPerformance, allApStatistics, allApProductTypes))
-        let thisTowerAps: string[] = Array.from(thisTowerApPerformance.keys())
+        //let thisTowerAps: string[] = Array.from(thisTowerApPerformance.keys())
         let panelRevenue = dtoTowerValuesToStackedChartData(panelsOfTowerValues(thisTowerApSms, allSmPackages, towerNames, false))
         let panelRevenueKeyCount = getNonNameNonTotalKeys(panelRevenue).length
         let panelRevenueChartHeightCount: number = (panelRevenue.length > panelRevenueKeyCount) ? panelRevenue.length : panelRevenueKeyCount
@@ -43,8 +43,8 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         let towerLQI = averageLQI(allSmStatistics, tower.name)
         let towerRevenue = tVals.filter(v => v.name === tower.name)[0].total
         let towerSMs = thisTowerApSms.size === 0 ? 0 : thisTowerApSms.get(tower.name).length
-        let towerSectorsDlUsage = thisTowerAps.reduce((agg, apName) => agg + (dataUsage[apName].download || 0), 0)
-        let towerSectorsUlUsage = thisTowerAps.reduce((agg, apName) => agg + (dataUsage[apName].upload || 0), 0)
+        //let towerSectorsDlUsage = thisTowerAps.reduce((agg, apName) => agg + (dataUsage[apName].download || 0), 0)
+        //let towerSectorsUlUsage = thisTowerAps.reduce((agg, apName) => agg + (dataUsage[apName].upload || 0), 0)
         let [busResCounts, busResValues] = busResCountAndValues(thisTowerApSms.get(tower.name), allSmPackages)
 
         docDefinition.content.push({
@@ -61,7 +61,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
                     { text: ' ' },
                     { text: 'Total Download', style: 'header', alignment: 'center' },
                     { text: 'DL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                    { text: `${getReadableDataSize(towerSectorsDlUsage, 2)}`, style: 'subheader', alignment: 'center' }
+                    { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(towerSectorsDlUsage, 2)}
                     ], width: 'auto'
                 },
                 {
@@ -71,7 +71,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
                     { text: ' ' },
                     { text: 'Total Upload', style: 'header', alignment: 'center' },
                     { text: 'UL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                    { text: `${getReadableDataSize(towerSectorsUlUsage, 2)}`, style: 'subheader', alignment: 'center' }
+                    { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(towerSectorsUlUsage, 2)}
                     ], width: '*'
                 },
                 {

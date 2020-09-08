@@ -41,7 +41,7 @@ async function main() {
         const allSmPackages = await getAllSmEipPackages(allSmStatistics) 
 
         // Generate High Level report with Financials
-        attachments.push(await createHighLevelNetworkReport(allApPerformance, allSmStatistics, allSmPackages.packages, allApStatistics))
+        attachments.push(await createHighLevelNetworkReport(allSmStatistics, allSmPackages.packages, allApStatistics))
         
         // Generate High Level report with Financials
         attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers, allSmStatistics, allSmPackages.packages))

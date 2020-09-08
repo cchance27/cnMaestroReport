@@ -257,7 +257,9 @@ export function averageLQI(allSmStatistics: Map<string, apiSmStatistics[]>, towe
     return {downlink: dl_lqi, uplink: ul_lqi}
 }
 
+// INVALID
 export function apTotalDataUsage(allApPerformance: Map<string, apiPerformance[]>) {
+    // this is incorrect as the radio.dl_kbits is the speed at that time not the actual octet figure at that point
     let dataUsage = {}
     for (const [AP, hours] of allApPerformance) {
         // TODO: fix for missing hours sometimes radio might be mising for the last or first hour
