@@ -6,8 +6,10 @@ import { getReadableThroughput } from './myFunctions';
 
 // PerfTable with better names to avoid having to rewrite them for the PDF Table
 export function perfToTable(data: Map<string, apiPerformance[]>, stat: Map<string, apiStatistics[]>, allApProductTypes) {
-    return Array.from(data.values())
+    let result = Array.from(data.values())
         .map((perf: apiPerformance[]) => {
+            if (perf.length === 0) return null // Edge case where we have a Device with no performance data
+
             // BPH calculations
             let bphDLvalues = perfToBpHz(perf, stat.get(perf[0].tower).filter((ap) => ap.name == perf[0].name)[0], true).map(v => v.value)
             let bphULvalues = perfToBpHz(perf, stat.get(perf[0].tower).filter((ap) => ap.name == perf[0].name)[0], false).map(v => v.value)
@@ -30,10 +32,17 @@ export function perfToTable(data: Map<string, apiPerformance[]>, stat: Map<strin
             let dlbusyhr = calcCongestion(perf, "dl_frame_utilization", 90)
             let ulbusyhr = calcCongestion(perf, "ul_frame_utilization", 90)
 
+            // Band
+            let frequency = stat.get(perf[0].tower).filter((ap) => ap.name == perf[0].name)[0].radio.frequency
+            if (frequency > 0) { 
+                frequency = frequency > 5000 ? 5 : 3
+            }
+
             return ({
                 "Name": { value: name, formatted: name },
                 "SMs": { value: sms, formatted: sms },
                 "Type": { value: type, formatted: type },
+                "Band": { value: frequency, formatted: frequency },
 
                 "Download Throughput (Max)": { value: dlmax, formatted: getReadableThroughput(dlmax, 0) },
                 "Download Usage (Mean)": { value: dlumean, formatted: `${dlumean.toFixed(1)}%`, alerted: type != '450m' && dlumean > 70 },
@@ -48,4 +57,6 @@ export function perfToTable(data: Map<string, apiPerformance[]>, stat: Map<strin
                 "Upload Busy Hours": { value: ulbusyhr, formatted: `${ulbusyhr.toFixed(0)}%`, alerted: type != '450m' && ulbusyhr >= 20 },
             })
         })
+        
+        return result.filter(x => x !== null) // Edge case cleanup for missing performance
 }

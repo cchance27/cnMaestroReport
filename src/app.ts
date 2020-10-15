@@ -7,6 +7,7 @@ import { createHighLevelSiteReport } from './reports/createHighLevelSiteReport'
 import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
 import { deleteOldCache, deleteOldPdfs } from './caching'
+//import { createPanelExcelWorkbook } from './reports/createPanelExcelWorkbook'
 
 
 async function main() {
@@ -33,6 +34,9 @@ async function main() {
 
     // Generate a technical report
     attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers))
+
+    // Generate a Excel Sector report: WIP
+    //attachments.push(await createPanelExcelWorkbook(allApPerformance, allApProductTypes, allApStatistics))
 
     let notices = "";
     // If EngageIP support is enabled we can generate a package details report and fetch package infromation from EIP.

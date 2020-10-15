@@ -20,20 +20,20 @@ export function genPdfTableDDContent(data: {}[], highlightFieldName: string = ""
 
     if (data.length == 0) { return null }
 
-    let headTop = [{}, {}, {}, 
+    let headTop = [{}, {}, {}, {},
         {text: 'Download', colSpan: 5, alignment: 'center', fillColor: '#c0d6e4'}, {}, {}, {}, {}, 
         {text: 'Upload', colSpan: 5, alignment: 'center'}, {}, {}, {}, {}]
 
     Object.keys(data[0]).forEach((k, i) => {
         headers.push(
             { 
-                text: k.replace("Download ", "").replace("Upload", ""), 
+                text: k.replace("Download ", "").replace("Upload ", ""), 
                 style: 'tableHeader', 
                 alignment: (i == 0 ? 'left' : 'center'), 
-                fillColor: ((i >= 3 && i < 8) ? '#c0d6e4' : 'white')
+                fillColor: ((i >= 4 && i < 9) ? '#c0d6e4' : 'white')
             })
 
-        widths.push((i == 3 || i == 8) ? 43 : 'auto') 
+        widths.push((i == 4 || i == 9) ? 43 : 'auto') 
     })
     
     let result = {
@@ -48,7 +48,7 @@ export function genPdfTableDDContent(data: {}[], highlightFieldName: string = ""
     }
 
     data.forEach(row => result.table.body.push(Object.keys(row).map((k, i) => {
-        let fillColor = ((i >= 3 && i < 8) ? '#c0d6e4' : 'white')
+        let fillColor = ((i >= 4 && i < 9) ? '#c0d6e4' : 'white')
         fillColor = highlightFieldName == k ? "yellow" : fillColor
 
         return ({ 
@@ -197,8 +197,12 @@ export function panelsOfTowerValues(thisTowerApSms: Map<string, apiSmStatistics[
                     APs[apName].Value = APs[apName].total
                 }
                     // Keep track of total revenue for this panel
-               
             } else {
+                // Edge Case: Customers on this AP didn't have SMs found so we need at least to fill out the total/value
+                if (APs[apName].total === undefined) {
+                    APs[apName].total = 0
+                    APs[apName].Value = 0
+                }
                 console.log(`Missing Package for SM: ${sm.mac}`)
             }
         })
