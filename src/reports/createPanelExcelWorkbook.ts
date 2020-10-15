@@ -1,7 +1,7 @@
 import { apiStatistics, apiPerformance } from '../cnMaestroTypes'
 import { perfToTable } from '../perfToTableData'
 //import * as fs from 'fs'
-//import { fileDateTag} from '../timeFunctions'
+import { fileDateTag} from '../timeFunctions'
 //import * as Excel from 'exceljs'
 
 export async function createPanelExcelWorkbook(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, reportDir: string = "reports") {
@@ -26,7 +26,7 @@ export async function createPanelExcelWorkbook(allApPerformance: Map<string, api
 //            sheet.addRow(sector)
         })
 //
-//    let filename = `${reportDir}/${fileDateTag()} - cnMaestro Sectors.xlsx`
+    let filename = `${reportDir}/${fileDateTag()} - cnMaestro Sectors.xlsx`
 //    await workbook.xlsx.writeFile(filename)
-//    return filename
+    return filename
 }
