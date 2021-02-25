@@ -41,3 +41,7 @@ wsdlUrl = "http://engageip.domain.local/Adminportal/webservice.asmx"
 owner_id = "1"
 report_name = "ViewProfileAnswerPackageValue"
 answer_name = "Answer"
+
+[prometheus]
+enable = true
+url = "http://prometheus.domain.local"

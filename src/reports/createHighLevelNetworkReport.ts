@@ -2,10 +2,11 @@ import { logoFile, brandColor1 } from '../config'
 import { apiSmStatistics, apiStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, gauge, donutChart } from '../charting'
 import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, totalSmValue, smCountByFrequency, apCountByFrequency, towerSmCount, towerArpuValues } from "../pdfFunctions"
-import { eipPackage } from '../myFunctions'
+import { eipPackage, getReadableDataSize } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
 import { fileStartDate, fileDateTag, formattedStartDateTime, formattedEndDateTime } from '../timeFunctions'
+import { Bandwidth } from '../prometheusApiCalls'
 
 function ownerCountsAndValues(allSmPackages: {[esn: string]: eipPackage}) {
     let ownersCount: {[owner:string]: number} = {}
@@ -107,7 +108,7 @@ function ownerPageGenerator(ownerName: string, allSmPackages: {[esn: string]: ei
     return ownerPage
 }
 
-export async function createHighLevelNetworkReport(allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, allApStatistics: Map<string, apiStatistics[]>, reportDir: string = "reports") {
+export async function createHighLevelNetworkReport(allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, allApStatistics: Map<string, apiStatistics[]>, panelBWs: Map<string, Bandwidth>, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) {
         fs.mkdirSync(reportDir)
     }
@@ -118,10 +119,15 @@ export async function createHighLevelNetworkReport(allSmStatistics: Map<string, 
     let tARPUVals = towerArpuValues(allSmStatistics, allSmPackages)
     let pVals = packageValues(allSmPackages)
     let subVals = packageSubscribers(allSmPackages)
-    //let dataUsage = apTotalDataUsage(allApPerformance)
     let formatDollar = d3.format("$,")
-    //let networkDlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + (dataUsage[apName].download || 0), 0)
-    //let networkUlUsage = Object.keys(dataUsage).reduce((agg, apName) => agg + (dataUsage[apName].upload || 0), 0)
+
+    let networkDlUsage: number = 0;
+    let networkUlUsage: number = 0;
+
+    for(let [_, bw] of panelBWs.entries()) {
+        networkDlUsage += bw.DL
+        networkUlUsage += bw.UL
+    }
 
     let [ownersCount, ownersValue] = ownerCountsAndValues(allSmPackages)
     let [busResCount, busResValue] = smBusResCountsAndValues(allSmPackages)
@@ -178,14 +184,14 @@ export async function createHighLevelNetworkReport(allSmStatistics: Map<string, 
                                     stack: [
                                         { text: 'Total Download', style: 'header', alignment: 'center' },
                                         { text: 'DL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                                        { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(networkDlUsage, 2)}
+                                        { text: `${getReadableDataSize(networkDlUsage, 2)}`, style: 'subheader', alignment: 'center' } 
                                     ]
                                 },
                                 {
                                     stack: [
                                         { text: 'Total Upload', style: 'header', alignment: 'center' },
                                         { text: 'UL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                                        { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(networkUlUsage, 2)}
+                                        { text: `${getReadableDataSize(networkUlUsage, 2)}`, style: 'subheader', alignment: 'center' } // 
                                     ]
                                 }
                             ]

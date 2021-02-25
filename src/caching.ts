@@ -5,6 +5,7 @@ import { getEipApiToObject } from './engageipApiCalls'
 import { apiSmStatistics } from './cnMaestroTypes'
 import { getCNMapi } from './cnMaestroApiCalls'
 import { fileDateTag } from './timeFunctions'
+import { Bandwidth, getPromPanelBandwidth } from './prometheusApiCalls'
 const moment = require('moment')
 
 export function deleteOldCache(cacheDir: string = "cache") {
@@ -45,6 +46,28 @@ export function deleteOldXls(reportDir: string = "reports") {
     }
     
     xlsFiles.map(f => fs.unlinkSync(`${reportDir}/${f}`))
+}
+
+export async function getCachedPromBandwidth(ipAddress: string, dateBasedCache: boolean = true, cacheDir: string = "cache"): Promise<Bandwidth> {
+    // Create cache directory if it doesn't exist
+    if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir) }
+
+    let cacheFile = dateBasedCache ? `${cacheDir}/${fileDateTag()} - prometheus-${ipAddress}.cache` : `${cacheDir}/prometheus-${ipAddress}.cache`
+    if (fs.existsSync(cacheFile)) {
+        console.log(`Cache Restored: ${cacheFile}`)
+        return JSON.parse(fs.readFileSync(cacheFile, 'utf8'))
+    }
+    else {
+        console.log(`Fetching Fresh Prometheus: ${ipAddress}`)
+        let values = (await getPromPanelBandwidth(ipAddress))
+        if (values.DL == -1 || values.UL == -1) {
+            console.log("Cache Skipped: Values Missing")
+        } else {
+            fs.writeFileSync(cacheFile, JSON.stringify(values), 'utf8')
+            console.log(`Cache Created: ${cacheFile}`)    
+        }
+        return values
+    }
 }
 
 export async function getCachedCnMaestro(objectName: string, apiUrl: string, dateBasedCache: boolean = true, cacheDir: string = "cache") {

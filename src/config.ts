@@ -54,6 +54,12 @@ class Configuration {
 		answer_name: string
 	}
 
+	// Prometheus Config
+	prometheus: {
+		enable: string
+		url: string
+	}
+
 	constructor() {
 		let configFile = `config.toml`
 		if (fs.existsSync(configFile)) {
@@ -66,6 +72,7 @@ class Configuration {
 			this.cnmaestro = parsed.cnmaestro
 			this.mail = parsed.mail
 			this.branding = parsed.branding
+			this.prometheus = parsed.prometheus
 		} else {
 			throw 'Configuration (config.toml) not found!'
 		}
@@ -166,3 +173,6 @@ export const debug = config.debug
 export const debugAmount = config.debugAmount
 export const pdfFonts = config.pdfFonts
 export const pdfStyles = config.pdfStyles
+
+export const enableProm = config.prometheus.enable
+export const promUrl = config.prometheus.url

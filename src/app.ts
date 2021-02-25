@@ -1,4 +1,4 @@
-import { enableEip, schedule, deleteAfterEmail }  from './config'
+import { enableEip, schedule, deleteAfterEmail, enableProm }  from './config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from './cnMaestroTypes'
 import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics, /* getAllSmPerformance */ } from './cnMaestroApiCalls'
 import { createFullTechReport } from './reports/createFullTechReport'
@@ -8,12 +8,12 @@ import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
 import { deleteOldCache, deleteOldPdfs, deleteOldXls } from './caching'
 import { createPanelExcelWorkbook } from './reports/createPanelExcelWorkbook'
-
+import { Bandwidth, getAllPromPanelBandwidths } from './prometheusApiCalls'
 
 async function main() {
     // Cleanup Old Cache Files
     deleteOldCache()
-
+    
     // Grab our towers
     const towers: Array<apiTower> = await getAllTowers()
 
@@ -40,6 +40,11 @@ async function main() {
 
     // Generate a Excel Sector report: WIP
     await createPanelExcelWorkbook(allApPerformance, allApProductTypes, allApStatistics)
+    
+    let allPanelBandwidth: Map<string, Bandwidth> = new Map
+    if (enableProm) {
+        allPanelBandwidth = await getAllPromPanelBandwidths(allApStatistics);
+    }
 
     let notices = "";
     // If EngageIP support is enabled we can generate a package details report and fetch package infromation from EIP.
@@ -48,10 +53,10 @@ async function main() {
         const allSmPackages = await getAllSmEipPackages(allSmStatistics) 
 
         // Generate High Level report with Financials
-        attachments.push(await createHighLevelNetworkReport(allSmStatistics, allSmPackages.packages, allApStatistics))
+        attachments.push(await createHighLevelNetworkReport(allSmStatistics, allSmPackages.packages, allApStatistics, allPanelBandwidth))
         
         // Generate High Level report with Financials
-        attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers, allSmStatistics, allSmPackages.packages))
+        attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers, allSmStatistics, allSmPackages.packages, allPanelBandwidth))
 
         if (allSmPackages.double.length > 0) {
             notices += "<h3>EngageIP Duplicate ESNs</h3>"
