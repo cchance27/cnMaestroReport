@@ -1,7 +1,7 @@
 import { logoFile, brandColor1 } from '../config'
 import { apiSmStatistics, apiStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, gauge, donutChart } from '../charting'
-import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, totalSmValue, smCountByFrequency, apCountByFrequency } from "../pdfFunctions"
+import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, totalSmValue, smCountByFrequency, apCountByFrequency, towerSmCount, towerArpuValues } from "../pdfFunctions"
 import { eipPackage } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
@@ -62,6 +62,10 @@ function ownerPageGenerator(ownerName: string, allSmPackages: {[esn: string]: ei
                 stack: [{ text: `Revenue`, style: 'header', alignment: 'center' },
                 { text: 'This Owners Online SM Revenue', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
                 { text: `${formatDollar(totalSmValue(ownerSmPackages))}/month`, style: 'subheader', alignment: 'center' },
+                { text: " " },
+                { text: 'ARPU', style: 'header', alignment: 'center' },
+                { text: 'This Owners ARPU, this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                { text: d3.format("($,.0f")((totalSmValue(ownerSmPackages) / Object.keys(ownerSmPackages).length)), style: 'subheader', alignment: 'center' },
                 ], width: "auto"
             },
             {
@@ -110,6 +114,8 @@ export async function createHighLevelNetworkReport(allSmStatistics: Map<string, 
 
     let avgLQI = averageLQI(allSmStatistics)
     let tVals = towerValues(allSmStatistics, allSmPackages)
+    let tSMVals = towerSmCount(allSmStatistics)
+    let tARPUVals = towerArpuValues(allSmStatistics, allSmPackages)
     let pVals = packageValues(allSmPackages)
     let subVals = packageSubscribers(allSmPackages)
     //let dataUsage = apTotalDataUsage(allApPerformance)
@@ -137,37 +143,92 @@ export async function createHighLevelNetworkReport(allSmStatistics: Map<string, 
             {
                 columns: [
                     {
-                        stack: [{ text: 'Total SM Revenue', style: 'header', alignment: 'center' },
-                        { text: 'Online SM Revenue this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                        { text: `${formatDollar(totalSmValue(allSmPackages))}/month`, style: 'subheader', alignment: 'center' },
-                        { text: ' ' },
-                        { text: 'Total Download', style: 'header', alignment: 'center' },
-                        { text: 'DL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                        { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(networkDlUsage, 2)}
-                        ], width: "auto"
+                        stack: [
+                        {
+                            columns: [
+                                {
+                                    stack: [
+                                        { text: 'Revenue', style: 'header', alignment: 'center' },
+                                        { text: 'Network wide, for this reports period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                                        { text: `${formatDollar(totalSmValue(allSmPackages))}/m`, style: 'subheader', alignment: 'center' },
+                                    ], width: 95
+                                },
+                                {
+                                    stack: [
+                                        { text: 'Subscribers', style: 'header', alignment: 'center' },
+                                        { text: 'Network wide, for this reports period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                                        { text: d3.format(",")(Object.keys(allSmPackages).length), style: 'subheader', alignment: 'center' },
+                                    ], width: 95
+                                },
+                                {
+                                    stack: [
+                                        { text: 'ARPU', style: 'header', alignment: 'center' },
+                                        { text: 'Network wide, for this reports period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                                        { text: d3.format("($,.0f")((totalSmValue(allSmPackages) / Object.keys(allSmPackages).length)), style: 'subheader', alignment: 'center' },
+                                    ], width: 95
+                                }
+                            ]
+                        },
+                        {
+                            text : " " 
+                        },
+                        {
+                            columns: [ 
+                                {
+                                    stack: [
+                                        { text: 'Total Download', style: 'header', alignment: 'center' },
+                                        { text: 'DL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                                        { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(networkDlUsage, 2)}
+                                    ]
+                                },
+                                {
+                                    stack: [
+                                        { text: 'Total Upload', style: 'header', alignment: 'center' },
+                                        { text: 'UL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                                        { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(networkUlUsage, 2)}
+                                    ]
+                                }
+                            ]
+                        }
+                        ], width: 285
                     },
                     {
-                        stack: [{ text: 'Total Subscribers', style: 'header', alignment: 'center' },
-                        { text: 'Online SMs this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                        { text: Object.keys(allSmPackages).length, style: 'subheader', alignment: 'center' },
-                        { text: ' ' },
-                        { text: 'Total Upload', style: 'header', alignment: 'center' },
-                        { text: 'UL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                        { text: `Unavailable`, style: 'subheader', alignment: 'center' } // ${getReadableDataSize(networkUlUsage, 2)}
-                        ], width: "*"
-                    },
-                    {
-                        stack: [{ text: 'Network Subscriber Health', style: 'header', alignment: 'center' },
-                        { text: 'Networkwide Average SM Link Quality Index', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                        { columns: [{ svg: gauge(avgLQI.downlink, 80, "Downlink LQI", 100), alignment: 'center' }, { svg: gauge(avgLQI.uplink, 80, "Uplink LQI", 100), alignment: 'center' }] }
-                        ], width: 'auto'
+                        stack: [
+                            { text: 'Network Subscriber Health', style: 'header', alignment: 'center' },
+                            { text: 'Networkwide Average SM Link Quality Index', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+                            { columns: [{ svg: gauge(avgLQI.downlink, 70, "Downlink LQI", 100), alignment: 'center' }, { svg: gauge(avgLQI.uplink, 70, "Uplink LQI", 100), alignment: 'center' }] }
+                        ], width: '*'
                     }
                 ]
             }, // BIG CHART
-            { text: 'PMP monthly revenue by Tower', alignment: 'center', style: "header", margin: [0, 15, 0, 0] },
+            { text: 'PMP Monthly revenue by Tower', alignment: 'center', style: "header", margin: [0, 15, 0, 0] },
             { text: 'Revenue by tower based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-            { svg: stackedBarChart(tVals, 580, tVals.length * 12 + 15, true, 100, "total", true, false, false)},
+            { svg: stackedBarChart(tVals, 580, tVals.length * 12 + 15, true, 100, "total", true, false, false, true)},
             
+             // Network Overview
+             {
+                columns: [
+                    { text: stylizedHeading('Network Overview', 24), alignment: 'left' },
+                    { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }
+                ], pageBreak: 'before', margin: [0, 0, 0, 15]
+            }, 
+            // BIG CHART
+            { text: 'PMP Current ARPU by Tower', alignment: 'center', style: "header", margin: [0, 15, 0, 0] },
+            { text: 'Estimated ARPU by tower based on Online SMs during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+            { svg: stackedBarChart(tARPUVals, 580, tARPUVals.length * 12 + 15, true, 100, "total", true, false, false, false)},
+            
+            // Network Overview
+            {
+                columns: [
+                    { text: stylizedHeading('Network Overview', 24), alignment: 'left' },
+                    { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }
+                ], pageBreak: 'before', margin: [0, 0, 0, 15]
+            },
+            , // BIG CHART
+            { text: 'PMP SMs by Tower', alignment: 'center', style: "header", margin: [0, 15, 0, 0] },
+            { text: 'Online SMs during this period by tower', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
+            { svg: stackedBarChart(tSMVals, 580, tSMVals.length * 12 + 15, false, 100, "total", true, false, false, false)},
+
             // Comparisons
             {
                 columns: [

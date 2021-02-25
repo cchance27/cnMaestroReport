@@ -1,13 +1,13 @@
 import { enableEip, schedule, deleteAfterEmail }  from './config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from './cnMaestroTypes'
-import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics } from './cnMaestroApiCalls'
+import { getAllApStatistics, getAllApPerformance, getAllApProductTypes, getAllTowers, getAllSmStatistics, /* getAllSmPerformance */ } from './cnMaestroApiCalls'
 import { createFullTechReport } from './reports/createFullTechReport'
 import { createHighLevelNetworkReport } from './reports/createHighLevelNetworkReport'
 import { createHighLevelSiteReport } from './reports/createHighLevelSiteReport'
 import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
-import { deleteOldCache, deleteOldPdfs } from './caching'
-//import { createPanelExcelWorkbook } from './reports/createPanelExcelWorkbook'
+import { deleteOldCache, deleteOldPdfs, deleteOldXls } from './caching'
+import { createPanelExcelWorkbook } from './reports/createPanelExcelWorkbook'
 
 
 async function main() {
@@ -26,6 +26,9 @@ async function main() {
     // Fetch all the AP Performance data for our time period
     const allApPerformance: Map<string, apiPerformance[]> = await getAllApPerformance(allApStatistics)
 
+    // Fetch all the SM Performance data for our time period: DISABLED AS A LOT OF API CALLS AN NOT REALLY USEFUL AT MOMENT
+    //const allSmPerformance: Map<string, apiPerformance[]> = await getAllSmPerformance(allSmStatistics)
+
     // Fetch all the AP Product types
     const allApProductTypes: Map<string, string[]> = await getAllApProductTypes(allApStatistics)
 
@@ -36,7 +39,7 @@ async function main() {
     attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers))
 
     // Generate a Excel Sector report: WIP
-    //attachments.push(await createPanelExcelWorkbook(allApPerformance, allApProductTypes, allApStatistics))
+    await createPanelExcelWorkbook(allApPerformance, allApProductTypes, allApStatistics)
 
     let notices = "";
     // If EngageIP support is enabled we can generate a package details report and fetch package infromation from EIP.
@@ -73,6 +76,7 @@ async function main() {
     // Optionally cleanup old PDF files from reports directory
     if (deleteAfterEmail) {
         deleteOldPdfs()
+        deleteOldXls()
     }    
 
     // Alert the next run

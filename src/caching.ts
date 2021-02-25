@@ -35,6 +35,18 @@ export function deleteOldPdfs(reportDir: string = "reports") {
     pdfFiles.map(f => fs.unlinkSync(`${reportDir}/${f}`))
 }
 
+export function deleteOldXls(reportDir: string = "reports") {
+    if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir); return; }
+
+    let xlsFiles = fs.readdirSync(reportDir).filter(f => f.indexOf(".xlsx") > -1)
+
+    if (xlsFiles.length > 0) {
+        console.log(`Removing Old Cache ${reportDir}/*.xlsx`)
+    }
+    
+    xlsFiles.map(f => fs.unlinkSync(`${reportDir}/${f}`))
+}
+
 export async function getCachedCnMaestro(objectName: string, apiUrl: string, dateBasedCache: boolean = true, cacheDir: string = "cache") {
     // Create cache directory if it doesn't exist
     if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir) }

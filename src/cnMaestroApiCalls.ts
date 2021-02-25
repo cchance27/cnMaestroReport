@@ -52,6 +52,22 @@ export async function getAllApPerformance(towerApStatistics: Map<string, apiStat
      return apPerformance
 }
 
+export async function getAllSmPerformance(smStatistics: Map<string, apiSmStatistics[]>) {
+    let smPerformance: Map<string, any> = new Map<string, apiSmStatistics[]>()
+
+    for(let tower of smStatistics)  {
+         await Promise.all(
+            tower[1].map(async apStat => {
+                let perf = await getCachedCnMaestro(`${apStat.mac}-performance`, `/devices/${apStat.mac}/performance?start_time=${startTime()}&stop_time=${endTime()}`)
+                smPerformance.set(apStat.name, perf)
+            })
+        )
+        if (debug && smPerformance.keys.length == debugAmount) { break; } // Only grab debugAmount of towers
+     }
+
+     return smPerformance
+}
+
 export async function getAllApProductTypes(towerApStatistics: Map<string, apiStatistics[]>) {
     let apProduct: Map<string, string[]> = new Map<string, string[]>()
 

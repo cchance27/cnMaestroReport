@@ -39,7 +39,7 @@ export function insertLinebreaks() {
 export function stackedBarChart(data: Array<{}>, widthVar: number, heightVar: number, valueDollars: boolean = true, marginLeft: number = 100, sortFieldName: string = "total", endBarTotal: boolean = true, leftAxisTotal: boolean = false, showLegend: boolean = true, showPercent: boolean = true) {
     console.log(`New StackedBar Chart`)    
 
-    const format = valueDollars ? d3.format("$,") : d3.format(",")
+    const format = valueDollars ? d3.format("($,.0f") : d3.format(",")
     const margin = {top: 0, right: 50, bottom: 15, left: marginLeft},
     width = widthVar - margin.left - margin.right,
     height = heightVar - margin.top - margin.bottom

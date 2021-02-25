@@ -98,6 +98,7 @@ export function totalSmValue(allSmPackages) {
 }
 
 export function towerValues(allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages) {
+    // Each tower's value of connected SMs during this period total'd
     let towerPackages = []
     // [{Name: string, total: number , ...Columns...: number}
 
@@ -106,6 +107,34 @@ export function towerValues(allSmStatistics: Map<string, apiSmStatistics[]>, all
         towerPackages.push({name: towerName, total: totalSmVal, "SM Package Value": totalSmVal})
     }
     return towerPackages
+}
+
+export function towerArpuValues(allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages) {
+    // Each towers ARPU based on connected SMs package value total divided by how many connected SMs
+    let towerARPU = []
+    // [{Name: string, total: number , ...Columns...: number}
+
+    for (const [towerName, sms] of allSmStatistics) {
+        let totalSmVal = sms.reduce((agg, v: apiSmStatistics) => !allSmPackages[v.mac] ? agg : agg + allSmPackages[v.mac].amount, 0)
+        if (towerName == "Fire Department") {
+            let t = sms.length;
+            t=t;
+        }
+        towerARPU.push({name: towerName, total: (totalSmVal / sms.length), "SM ARPU": (totalSmVal / sms.length)})
+    }
+    return towerARPU
+}
+
+export function towerSmCount(allSmStatistics: Map<string, apiSmStatistics[]>) {
+    // How many SMs per Tower
+
+    let towerSMs = []
+    // [{Name: string, total: number , ...Columns...: number}
+
+    for (const [towerName, sms] of allSmStatistics) {
+        towerSMs.push({name: towerName, total: sms.length, "SMs": sms.length})
+    }
+    return towerSMs
 }
 
 export function packageValues(allSmPackages) {

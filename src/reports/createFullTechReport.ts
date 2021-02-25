@@ -16,12 +16,24 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
     let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes)
 
     let dlFrameCongestion = perfToTable(
-        new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "dl_frame_utilization"), congestionValue, 0.2))), 
+        new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "dl_frame_utilization"), congestionValue, 0.25))), 
+        allApStatistics, allApProductTypes)
+
+    let anyDlFrameCongestion = perfToTable(
+        new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "dl_frame_utilization"), congestionValue, 0))), 
         allApStatistics, allApProductTypes)
 
     let ulFrameCongestion = perfToTable(
-            new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "ul_frame_utilization"), congestionValue, 0.2))),
+        new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "ul_frame_utilization"), congestionValue, 0.25))),
+        allApStatistics, allApProductTypes)
+
+    let anyUlFrameCongestion = perfToTable(
+            new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "ul_frame_utilization"), congestionValue, 0))),
             allApStatistics, allApProductTypes)
+
+    let apCount = [...allApPerformance].length
+    console.log(`Downlink: Major Congestion ${dlFrameCongestion.length}, Minor Congestion ${anyDlFrameCongestion.length - dlFrameCongestion.length}, No Congestion: ${apCount - anyDlFrameCongestion.length}, Total Sectors: ${apCount}`)
+    console.log(`Uplink: Major Congestion ${ulFrameCongestion.length}, Minor Congestion ${anyUlFrameCongestion.length - ulFrameCongestion.length}, No Congestion: ${apCount - anyUlFrameCongestion.length}, Total Sectors: ${apCount}`)
 
     let docDefinition: any = {
     	content: [
@@ -68,6 +80,22 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
             { text: "Upload Low Bits/Hz Overview (450m)", style: 'header' },
             { text: "450m sectors with Average upload bits/hz below 2", style: 'subHeader'},
             genPdfTableDDContent(standardPerfTable.filter((a) => a["Upload b/Hz (Avg)"].value <= 2 && a.Type.value == '450m').sort((a, b) => (a["Upload b/Hz (Avg)"].value - b["Upload b/Hz (Avg)"].value)).reverse(), "Upload b/Hz (Avg)"),
+            
+            { columns: [
+                { text: stylizedHeading('Downlink Congestion', 24), alignment: 'left' }, 
+                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
+            
+            { text: "Sectors with Major SU-MIMO Congestion", style: 'header' }, // New Page
+            { text: "Any sectors with congestion > 6 hours per day", style: 'subHeader'},
+            genPdfTableDDContent(dlFrameCongestion.sort((a, b) => (a["Download Busy Hours"].value - b["Download Busy Hours"].value)).reverse() , "Download Busy Hours"),
+            
+            { columns: [
+                { text: stylizedHeading('Uplink Congestion', 24), alignment: 'left' }, 
+                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
+            
+            { text: "Sectors with Major SU-MIMO Congestion", style: 'header' },
+            { text: "Any sectors with congestion > 6 hours per day", style: 'subHeader'},
+            genPdfTableDDContent(ulFrameCongestion.sort((a, b) => (a["Upload Busy Hours"].value - b["Upload Busy Hours"].value)).reverse(), "Upload Busy Hours")
             
         ], 
         defaultStyle: {
