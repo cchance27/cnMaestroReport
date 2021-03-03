@@ -35,15 +35,9 @@ async function main() {
     // Store our various reports as attachments
     let attachments: string[] = []
 
-    // Generate a technical report
-    attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers))
-
-    // Generate a Excel Sector report: WIP
-    await createPanelExcelWorkbook(allApPerformance, allApProductTypes, allApStatistics)
-    
-    let allPanelBandwidth: Map<string, Bandwidth> = new Map
+    let allApBandwidth: Map<string, Bandwidth> = new Map
     if (enableProm) {
-        allPanelBandwidth = await getAllPromPanelBandwidths(allApStatistics);
+        allApBandwidth = await getAllPromPanelBandwidths(allApStatistics);
     }
 
     let notices = "";
@@ -53,10 +47,10 @@ async function main() {
         const allSmPackages = await getAllSmEipPackages(allSmStatistics) 
 
         // Generate High Level report with Financials
-        attachments.push(await createHighLevelNetworkReport(allSmStatistics, allSmPackages.packages, allApStatistics, allPanelBandwidth))
+        attachments.push(await createHighLevelNetworkReport(allSmStatistics, allSmPackages.packages, allApStatistics, allApBandwidth))
         
         // Generate High Level report with Financials
-        attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers, allSmStatistics, allSmPackages.packages, allPanelBandwidth))
+        attachments.push(await createHighLevelSiteReport(allApPerformance, allApProductTypes, allApStatistics, towers, allSmStatistics, allSmPackages.packages, allApBandwidth))
 
         if (allSmPackages.double.length > 0) {
             notices += "<h3>EngageIP Duplicate ESNs</h3>"
@@ -75,6 +69,12 @@ async function main() {
         }
     }
 
+    // Generate a technical report
+    attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers, allApBandwidth))
+
+    // Generate a Excel Sector report: WIP
+    await createPanelExcelWorkbook(allApPerformance, allApProductTypes, allApStatistics, allApBandwidth)
+           
     // Send email with the report
     await sendEmailReport(attachments, notices)
 

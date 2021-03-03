@@ -7,29 +7,30 @@ import { isCongested } from '../congestion'
 import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, smCountByFrequency, apCountByFrequency } from "../pdfFunctions"
 import * as fs from 'fs'
 import { fileStartDate, fileDateTag, formattedEndDateTime, formattedStartDateTime } from '../timeFunctions'
+import { Bandwidth } from '../prometheusApiCalls'
 
-export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], reportDir: string = "reports") {
+export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allApBandwidths: Map<string, Bandwidth>, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
     
     let congestionValue = 90 // 90% usage or more is congested
     
-    let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes)
+    let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes, allApBandwidths)
 
     let dlFrameCongestion = perfToTable(
         new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "dl_frame_utilization"), congestionValue, 0.25))), 
-        allApStatistics, allApProductTypes)
+        allApStatistics, allApProductTypes, allApBandwidths)
 
     let anyDlFrameCongestion = perfToTable(
         new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "dl_frame_utilization"), congestionValue, 0))), 
-        allApStatistics, allApProductTypes)
+        allApStatistics, allApProductTypes, allApBandwidths)
 
     let ulFrameCongestion = perfToTable(
         new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "ul_frame_utilization"), congestionValue, 0.25))),
-        allApStatistics, allApProductTypes)
+        allApStatistics, allApProductTypes, allApBandwidths)
 
     let anyUlFrameCongestion = perfToTable(
             new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "ul_frame_utilization"), congestionValue, 0))),
-            allApStatistics, allApProductTypes)
+            allApStatistics, allApProductTypes, allApBandwidths)
 
     let apCount = [...allApPerformance].length
     console.log(`Downlink: Major Congestion ${dlFrameCongestion.length}, Minor Congestion ${anyDlFrameCongestion.length - dlFrameCongestion.length}, No Congestion: ${apCount - anyDlFrameCongestion.length}, Total Sectors: ${apCount}`)
@@ -106,7 +107,7 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
     towers.forEach(tower => {
         // Create our SVGs for this tower
         let towerSvgs = createTowerSvgs(tower, allApStatistics, allApPerformance, allApProductTypes);
-        let thisTowerApTable = genPdfTableDDContent(perfToTable(new Map([...allApPerformance].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name)), allApStatistics, allApProductTypes))
+        let thisTowerApTable = genPdfTableDDContent(perfToTable(new Map([...allApPerformance].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name)), allApStatistics, allApProductTypes, allApBandwidths))
         
         // Tower Front Page
         docDefinition.content.push({ image: logoFile, alignment: 'center', margin: [0,200,0,10], pageBreak: 'before' })

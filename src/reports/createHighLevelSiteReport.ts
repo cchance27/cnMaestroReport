@@ -2,14 +2,14 @@ import { logoFile, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, getNonNameNonTotalKeys, gauge } from '../charting'
 import { perfToTable } from '../perfToTableData'
-import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, dtoApMacToNames, averageLQI, towerValues, panelsOfTowerValues, dtoTowerValuesToStackedChartData, packagesOfTowerValue, busResCountAndValues } from "../pdfFunctions"
+import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, dtoApMacToNames, averageLQI, towerValues, panelsOfTowerValues, dtoTowerValuesToStackedChartData, packagesOfTowerValue, busResCountAndValues, apPrometheusDataTotal } from "../pdfFunctions"
 import { eipPackage, getReadableDataSize } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
 import { fileStartDate, fileDateTag, formattedStartDateTime, formattedEndDateTime } from '../timeFunctions'
 import { Bandwidth } from '../prometheusApiCalls'
 
-export async function createHighLevelSiteReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, panelBWs: Map<string, Bandwidth>, reportDir: string = "reports") {
+export async function createHighLevelSiteReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, allApBandwidths: Map<string, Bandwidth>, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
 
     let towerNames = dtoApMacToNames(allApStatistics)
@@ -32,7 +32,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         console.log(`Generating Tower Page: ${tower.name}`)
         let thisTowerApSms: Map<string, apiSmStatistics[]> = new Map([...allSmStatistics].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name)) // Only this towers SMs
         let thisTowerApPerformance = new Map([...allApPerformance].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name))
-        let thisTowerApPerfTable = genPdfTableDDContent(perfToTable(thisTowerApPerformance, allApStatistics, allApProductTypes))
+        let thisTowerApPerfTable = genPdfTableDDContent(perfToTable(thisTowerApPerformance, allApStatistics, allApProductTypes, allApBandwidths))
         let panelRevenue = dtoTowerValuesToStackedChartData(panelsOfTowerValues(thisTowerApSms, allSmPackages, towerNames, false))
         let panelRevenueKeyCount = getNonNameNonTotalKeys(panelRevenue).length
         let panelRevenueChartHeightCount: number = (panelRevenue.length > panelRevenueKeyCount) ? panelRevenue.length : panelRevenueKeyCount
@@ -44,17 +44,8 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         let towerSMs = thisTowerApSms.size === 0 ? 0 : thisTowerApSms.get(tower.name).length
         
         // Grab this towers panels IPs so we can lookup their usage from prometheus
-        let thisTowerAps: string[] = []
-        for(let [_, aps] of allApStatistics.entries()) {
-            aps.forEach(ap => 
-                {
-                   if(ap.tower == tower.name) { thisTowerAps.push(ap.ip) }
-                }
-            )
-        }
-        let towerSectorsDlUsage = thisTowerAps.reduce((agg, apIP) => agg + panelBWs.get(apIP).DL, 0)
-        let towerSectorsUlUsage = thisTowerAps.reduce((agg, apIP) => agg + panelBWs.get(apIP).UL, 0)
-        
+        let thisTowerUsageTotal = apPrometheusDataTotal(allApBandwidths, tower.name, allApStatistics)
+         
         let [busResCounts, busResValues] = busResCountAndValues(thisTowerApSms.get(tower.name), allSmPackages)
 
         docDefinition.content.push({
@@ -71,7 +62,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
                     { text: ' ' },
                     { text: 'Total Download', style: 'header', alignment: 'center' },
                     { text: 'DL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                    { text: `${getReadableDataSize(towerSectorsDlUsage, 2, 1000)}`, style: 'subheader', alignment: 'center' }
+                    { text: `${getReadableDataSize(thisTowerUsageTotal.DL, 2, 1000)}`, style: 'subheader', alignment: 'center' }
                     ], width: 'auto'
                 },
                 {
@@ -81,7 +72,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
                     { text: ' ' },
                     { text: 'Total Upload', style: 'header', alignment: 'center' },
                     { text: 'UL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                    { text: `${getReadableDataSize(towerSectorsUlUsage, 2, 1000)}`, style: 'subheader', alignment: 'center' }
+                    { text: `${getReadableDataSize(thisTowerUsageTotal.UL, 2, 1000)}`, style: 'subheader', alignment: 'center' }
                     ], width: '*'
                 },
                 {

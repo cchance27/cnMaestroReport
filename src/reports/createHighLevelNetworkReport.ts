@@ -1,7 +1,7 @@
 import { logoFile, brandColor1 } from '../config'
 import { apiSmStatistics, apiStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, gauge, donutChart } from '../charting'
-import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, totalSmValue, smCountByFrequency, apCountByFrequency, towerSmCount, towerArpuValues } from "../pdfFunctions"
+import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, totalSmValue, smCountByFrequency, apCountByFrequency, towerSmCount, towerArpuValues, apPrometheusDataTotal } from "../pdfFunctions"
 import { eipPackage, getReadableDataSize } from '../myFunctions'
 import * as d3 from 'd3'
 import * as fs from 'fs'
@@ -108,7 +108,7 @@ function ownerPageGenerator(ownerName: string, allSmPackages: {[esn: string]: ei
     return ownerPage
 }
 
-export async function createHighLevelNetworkReport(allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, allApStatistics: Map<string, apiStatistics[]>, panelBWs: Map<string, Bandwidth>, reportDir: string = "reports") {
+export async function createHighLevelNetworkReport(allSmStatistics: Map<string, apiSmStatistics[]>, allSmPackages: {[esn: string]: eipPackage}, allApStatistics: Map<string, apiStatistics[]>, allApBandwidths: Map<string, Bandwidth>, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) {
         fs.mkdirSync(reportDir)
     }
@@ -121,13 +121,7 @@ export async function createHighLevelNetworkReport(allSmStatistics: Map<string, 
     let subVals = packageSubscribers(allSmPackages)
     let formatDollar = d3.format("$,")
 
-    let networkDlUsage: number = 0;
-    let networkUlUsage: number = 0;
-
-    for(let [_, bw] of panelBWs.entries()) {
-        networkDlUsage += bw.DL
-        networkUlUsage += bw.UL
-    }
+    let networkUsageTotal = apPrometheusDataTotal(allApBandwidths)
 
     let [ownersCount, ownersValue] = ownerCountsAndValues(allSmPackages)
     let [busResCount, busResValue] = smBusResCountsAndValues(allSmPackages)
@@ -184,14 +178,14 @@ export async function createHighLevelNetworkReport(allSmStatistics: Map<string, 
                                     stack: [
                                         { text: 'Total Download', style: 'header', alignment: 'center' },
                                         { text: 'DL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                                        { text: `${getReadableDataSize(networkDlUsage, 2, 1000)}`, style: 'subheader', alignment: 'center' } 
+                                        { text: `${getReadableDataSize(networkUsageTotal.DL, 2, 1000)}`, style: 'subheader', alignment: 'center' } 
                                     ]
                                 },
                                 {
                                     stack: [
                                         { text: 'Total Upload', style: 'header', alignment: 'center' },
                                         { text: 'UL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                                        { text: `${getReadableDataSize(networkUlUsage, 2, 1000)}`, style: 'subheader', alignment: 'center' } // 
+                                        { text: `${getReadableDataSize(networkUsageTotal.UL, 2, 1000)}`, style: 'subheader', alignment: 'center' } // 
                                     ]
                                 }
                             ]

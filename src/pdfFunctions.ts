@@ -1,6 +1,7 @@
 import { pdfFonts, pdfStyles, company, brandColor1, brandColor2 } from "./config";
 import * as fs from 'fs'
-import { apiStatistics, apiSmStatistics, apiPerformance } from "./cnMaestroTypes";
+import { apiStatistics, apiSmStatistics } from "./cnMaestroTypes";
+import { Bandwidth } from "./prometheusApiCalls";
 const pdfMake = require('pdfmake')
 
 interface table {
@@ -30,10 +31,16 @@ export function genPdfTableDDContent(data: {}[], highlightFieldName: string = ""
                 text: k.replace("Download ", "").replace("Upload ", ""), 
                 style: 'tableHeader', 
                 alignment: (i == 0 ? 'left' : 'center'), 
-                fillColor: ((i >= 4 && i < 9) ? '#c0d6e4' : 'white')
+                fillColor: ((i >= 4 && i < 9) ? '#c0d6e4' : (i >= 9) ? "#dce7ef" :'white')
             })
 
-        widths.push((i == 4 || i == 9) ? 43 : 'auto') 
+            if (i == 4 || i == 9) { // Column 4 and 9 are the throughput column
+                widths.push(40)
+            } else if (i == 6 || i == 11) {
+                widths.push(25)
+            } else {
+                widths.push('auto')
+            }
     })
     
     let result = {
@@ -290,44 +297,32 @@ export function averageLQI(allSmStatistics: Map<string, apiSmStatistics[]>, towe
     return {downlink: dl_lqi, uplink: ul_lqi}
 }
 
-// INVALID
-export function apTotalDataUsage(allApPerformance: Map<string, apiPerformance[]>) {
-    // this is incorrect as the radio.dl_kbits is the speed at that time not the actual octet figure at that point
-    let dataUsage = {}
-    for (const [AP, hours] of allApPerformance) {
-        // TODO: fix for missing hours sometimes radio might be mising for the last or first hour
-        let usageTotal = {download: 0, upload: 0}
-        let lastTotal = {download: 0, upload: 0}
-        hours.forEach(h => {
-            if (h.radio) {
-                if (h.radio.dl_kbits > lastTotal.download) {
-                    // DL Increased since previous hour
-                    usageTotal.download = usageTotal.download + (h.radio.dl_kbits - lastTotal.download) // add the difference to the total
-                } else {
-                    // DL Decrased so its a wrapped value
-                    usageTotal.download = usageTotal.download + h.radio.dl_kbits
-                }
-                lastTotal.download = h.radio.dl_kbits
+// Total our prometheus data, without tower gives total for entire network, with tower + allApStatistics provided gives a specific towers usage
+// We need to provide allAPstatistics so we can find which AP IP addresses are in the specitic tower/ap
+export function apPrometheusDataTotal(apBandwidths: Map<string, Bandwidth>, towerName: string = "", allApStatistics: Map<string, apiStatistics[]> = new Map()): Bandwidth {
+    let totalDlUsage: number = 0
+    let totalUlUsage: number = 0
 
-                if (h.radio.ul_kbits > lastTotal.upload) {
-                    // UL Increased since previous hour
-                    usageTotal.upload = usageTotal.upload + (h.radio.ul_kbits - lastTotal.upload) // add the difference to the total
-                } else {
-                    // UL Decrased so its a wrapped value
-                    usageTotal.upload = usageTotal.upload + h.radio.ul_kbits
+    if (towerName != "") {
+        let thisTowerAps = []
+        for(let [_, aps] of allApStatistics.entries()) {
+            aps.forEach(ap => 
+                {
+                   if(ap.tower == towerName) { thisTowerAps.push(ap.ip) }
                 }
-                lastTotal.upload = h.radio.ul_kbits
-            }
-        })
-        usageTotal.download = usageTotal.download * 1024 //we use bits throughout the app not kbit so convert to bits
-        usageTotal.upload = usageTotal.upload * 1024 //we use bits throughout the app not kbit so convert to bits
-
-        dataUsage[AP] = usageTotal // Save tower to output
+            )
+        }
+        totalDlUsage = thisTowerAps.reduce((agg, apIP) => agg + apBandwidths.get(apIP).DL, 0)
+        totalUlUsage = thisTowerAps.reduce((agg, apIP) => agg + apBandwidths.get(apIP).UL, 0)
+        
+    } else {
+        for(let [_, thisBw] of apBandwidths.entries()) {
+           totalDlUsage += thisBw.DL
+           totalUlUsage += thisBw.UL
+        }
     }
-
-    return dataUsage
+    return {DL: totalDlUsage, UL: totalUlUsage}
 }
-
 // Check how many subscribers are on panels that are 5ghz vs 3ghz
 export function smCountByFrequency(allApStatistics: Map<string, apiStatistics[]>) {
     let r5ghz = 0, r3ghz = 0;
