@@ -184,14 +184,14 @@ export async function createHighLevelNetworkReport(allSmStatistics: Map<string, 
                                     stack: [
                                         { text: 'Total Download', style: 'header', alignment: 'center' },
                                         { text: 'DL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                                        { text: `${getReadableDataSize(networkDlUsage, 2)}`, style: 'subheader', alignment: 'center' } 
+                                        { text: `${getReadableDataSize(networkDlUsage, 2, 1000)}`, style: 'subheader', alignment: 'center' } 
                                     ]
                                 },
                                 {
                                     stack: [
                                         { text: 'Total Upload', style: 'header', alignment: 'center' },
                                         { text: 'UL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                                        { text: `${getReadableDataSize(networkUlUsage, 2)}`, style: 'subheader', alignment: 'center' } // 
+                                        { text: `${getReadableDataSize(networkUlUsage, 2, 1000)}`, style: 'subheader', alignment: 'center' } // 
                                     ]
                                 }
                             ]

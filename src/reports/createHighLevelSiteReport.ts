@@ -71,7 +71,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
                     { text: ' ' },
                     { text: 'Total Download', style: 'header', alignment: 'center' },
                     { text: 'DL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                    { text: `${getReadableDataSize(towerSectorsDlUsage, 2)}`, style: 'subheader', alignment: 'center' }
+                    { text: `${getReadableDataSize(towerSectorsDlUsage, 2, 1000)}`, style: 'subheader', alignment: 'center' }
                     ], width: 'auto'
                 },
                 {
@@ -81,7 +81,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
                     { text: ' ' },
                     { text: 'Total Upload', style: 'header', alignment: 'center' },
                     { text: 'UL data during this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                    { text: `${getReadableDataSize(towerSectorsUlUsage, 2)}`, style: 'subheader', alignment: 'center' }
+                    { text: `${getReadableDataSize(towerSectorsUlUsage, 2, 1000)}`, style: 'subheader', alignment: 'center' }
                     ], width: '*'
                 },
                 {
