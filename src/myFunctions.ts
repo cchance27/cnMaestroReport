@@ -52,14 +52,15 @@ export const getReadableThroughput = function (fileSizeInBytes: number, fixedDig
     return Math.max(fileSizeInBytes, 0.1).toFixed(fixedDigits) + byteUnits[i];
 }
 
-export const getReadableDataSize = function (bytes: number, fixedDigits: number = 0) {
+export const getReadableDataSize = function (bytes: number, fixedDigits: number = 0, divisor: number = 1024) {
     if (!bytes) return "0 bps"
+    // divisor is to handle overwriting for octets
     var i = -1;
     var byteUnits = [' KB', ' MB', ' GB', ' TB', 'PB', 'EB', 'ZB', 'YB'];
     do {
-        bytes = bytes / 1024;
+        bytes = bytes / divisor;
         i++;
-    } while (bytes > 1024);
+    } while (bytes > divisor);
 
     return Math.max(bytes, 0.1).toFixed(fixedDigits) + byteUnits[i];
 }
