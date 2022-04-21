@@ -107,7 +107,9 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
     towers.forEach(tower => {
         // Create our SVGs for this tower
         let towerSvgs = createTowerSvgs(tower, allApStatistics, allApPerformance, allApProductTypes);
-        let thisTowerApTable = genPdfTableDDContent(perfToTable(new Map([...allApPerformance].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name)), allApStatistics, allApProductTypes, allApBandwidths))
+        let towersApPerformance = new Map([...allApPerformance].filter(([_, v]) => v.length > 0 && v[0].tower != undefined && v[0].tower == tower.name))
+        let towersApStatistics = new Map([...allApStatistics].filter(([_, v]) => v.length > 0 && v[0].tower != undefined && v[0].tower == tower.name))
+        let thisTowerApTable = genPdfTableDDContent(perfToTable(towersApPerformance, allApStatistics, allApProductTypes, allApBandwidths))
         
         // Tower Front Page
         docDefinition.content.push({ image: logoFile, alignment: 'center', margin: [0,200,0,10], pageBreak: 'before' })
@@ -117,11 +119,11 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
             columns: [
                 { stack: [{ text: 'SMs by Frequency', style: 'header', alignment: 'center' },
                           { text: 'Based on this Tower', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                          { svg: donutChart(smCountByFrequency(new Map([...allApStatistics].filter(([_, v]) => v[0].tower == tower.name))), 160, false, true), alignment: 'center' }]
+                          { svg: donutChart(smCountByFrequency(towersApStatistics), 160, false, true), alignment: 'center' }]
                 },
                 { stack: [{ text: 'APs by Frequency', style: 'header', alignment: 'center' },
                           { text: 'Based on this Tower', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                          { svg: donutChart(apCountByFrequency(new Map([...allApStatistics].filter(([_, v]) => v[0].tower == tower.name))), 160, false, true), alignment: 'center' }]
+                          { svg: donutChart(apCountByFrequency(towersApStatistics), 160, false, true), alignment: 'center' }]
                  },
             ], margin: [0, 15, 0, 0]
         })
@@ -143,7 +145,7 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
 function createTowerSvgs(tower: apiTower, allApStatistics: Map<string, apiStatistics[]>, allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>): string[] {
     // Create and return an array of all the SVGs for this tower
     let svgs: string[] = []
-    let thisTowerAps: Map<string, apiPerformance[]> = new Map([...allApPerformance].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name && v[0].radio))
+    let thisTowerAps: Map<string, apiPerformance[]> = new Map([...allApPerformance].filter(([_, v]) => v.length > 0 && v[0].tower != undefined && v[0].tower == tower.name && v[0].radio))
     thisTowerAps.forEach((ap: apiPerformance[]) => svgs.push(graph(ap, allApStatistics.get(tower.name), allApProductTypes, 90, 0.2)))
 
     return svgs
