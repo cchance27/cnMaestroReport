@@ -10,7 +10,6 @@ export class apiTower {
     name: string
     network: string
 }
-
 export class apiRadio {
     auth_type: string
     channel_width: string
@@ -78,7 +77,7 @@ export class apiStatistics {
     ip: string
     ip_dns: string
     ip_dns_secondary: string
-    lan_Status: string
+    lan_status: string
     last_sync: string
     mac: string
     managed_account: string
@@ -93,6 +92,7 @@ export class apiStatistics {
     tower: string
     type: string
     vlan: number
+    cpu: number // new in v2
 }
 
 export class apiSmStatistics {
@@ -108,7 +108,7 @@ export class apiSmStatistics {
     distance: number
     gain: number
     mac: string
-    max: string
+    max: string // unused v2?
     mode: string
     temperature: number
     vlan: number
@@ -120,4 +120,5 @@ export class apiSmStatistics {
     ip: string
     name: string
     radio: apiRadio
+    cpu: number // new in v2
 }

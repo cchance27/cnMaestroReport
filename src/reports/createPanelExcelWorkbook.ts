@@ -16,17 +16,18 @@ export async function createPanelExcelWorkbook(allApPerformance: Map<string, api
     const sheet = workbook.addWorksheet('Canopy450 Panels')
 
     let columns = []
-    Object.keys(standardPerfTable[0]).forEach((k) => { columns.push({ header: k, key: k }) })
-    sheet.columns = columns
-//
-    Array.from(standardPerfTable.values())
-        .map((sector) => {
-            Object.keys(sector).forEach((item: any) => {
-                sector[item] = sector[item].value
+    if (Object.keys(standardPerfTable).length > 0) {
+        Object.keys(standardPerfTable[0]).forEach((k) => { columns.push({ header: k, key: k }) })
+        
+        sheet.columns = columns 
+        Array.from(standardPerfTable.values())
+            .map((sector) => {
+                Object.keys(sector).forEach((item: any) => {
+                    sector[item] = sector[item].value
+                })
+               sheet.addRow(sector)
             })
-           sheet.addRow(sector)
-        })
-//
+    }
     let filename = `${reportDir}/${fileDateTag()} - cnMaestro Sectors.xlsx`
     await workbook.xlsx.writeFile(filename)
     return filename

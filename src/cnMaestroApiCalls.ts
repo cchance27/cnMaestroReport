@@ -13,7 +13,7 @@ export async function getAllApStatistics(towers: Array<apiTower>) {
 
     await Promise.all(
         towers.map(async tower => {
-            let stats = await getCachedCnMaestro(`${tower.name}`, `/devices/statistics?mode=ap&tower=${tower.id.split(' ').join('+')}`)
+            let stats = await getCachedCnMaestro(`${tower.name}`, `/devices/statistics?network=default&mode=ap&tower=${tower.id.split(' ').join('+')}`)
             apStatistics.set(tower.name, stats)
         })
     )
@@ -26,7 +26,7 @@ export async function getAllSmStatistics(towers: Array<apiTower>) {
 
     await Promise.all(
         towers.map(async tower => {
-            let stats = await getCachedCnMaestro(`${tower.name}-subs`, `/devices/statistics?mode=sm&tower=${tower.id.split(' ').join('+')}`)
+            let stats = await getCachedCnMaestro(`${tower.name}-subs`, `/devices/statistics?network=default&mode=sm&tower=${tower.id.split(' ').join('+')}`)
             
             stats = stats.filter((val: apiSmStatistics) => val.status == "online") // Let's only return the online SMs
             smStatistics.set(tower.name, stats)
@@ -38,11 +38,13 @@ export async function getAllSmStatistics(towers: Array<apiTower>) {
 
 export async function getAllApPerformance(towerApStatistics: Map<string, apiStatistics[]>) {
     let apPerformance: Map<string, apiPerformance[]> = new Map<string, apiPerformance[]>()
+    let start = startTime()
+    let end = endTime()
 
     for(let tower of towerApStatistics)  {
          await Promise.all(
             tower[1].map(async apStat => {
-                let perf = await getCachedCnMaestro(`${apStat.mac}-performance`, `/devices/${apStat.mac}/performance?start_time=${startTime()}&stop_time=${endTime()}`)
+                let perf = await getCachedCnMaestro(`${apStat.mac}-performance`, `/devices/${apStat.mac}/performance?start_time=${start}&stop_time=${end}`)
                 apPerformance.set(apStat.name, perf)
             })
         )
@@ -111,8 +113,13 @@ export const loginCNMaestro = async function (clientid: string, client_secret: s
         },
         body: body
     })
-    let resp = await login.json()
-    return resp.access_token
+    try {
+       let resp = await login.json()
+       return resp.access_token
+    } catch(er) {
+        console.log("Error Getting CnMaestro Login:" + er)
+        throw er;
+    }
 }
 
 
@@ -131,7 +138,7 @@ export async function getCNMapi(baseURL: string, apiPath: string, getAll: boolea
         res = await getApiJSON(baseURL, apiPath) // retry our fetch with the new accessToken
     }
 
-    if (res.error) { throw "Authentication to cnMaestro failed!"}
+    if (res.error) { throw `Authentication to cnMaestro failed! : ${res.error}`}
 
     let values: Array<{}> = res.data // Pull our our data results as that's what we'll be working with
     let offset = 0 // Manually using an offset as had issues with API always returning paging.offset = 0
