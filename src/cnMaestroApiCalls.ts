@@ -3,6 +3,8 @@ import { apiStatistics, apiPerformance, apiTower, apiSmStatistics } from "./cnMa
 import { debug, debugAmount, clientid, client_secret } from "./config"
 import fetch from 'node-fetch'
 import { startTime, endTime } from "./timeFunctions"
+const sleep = require('sleep-promise');
+
 
 export async function getAllTowers() {
     return getCachedCnMaestro('towers', '/networks/default/towers')
@@ -97,7 +99,32 @@ async function getApiJSON(baseURL, apiPath) {
         }
     })
 
-    return await response.json();
+    // Handle API Limit
+    var headers = response.headers.entries();
+    var remaining = 0
+    var resetIn = 0
+    let header = headers.next()
+    while (!header.done){
+      //console.log(header.value);
+      if (header.value[0] == "ratelimit-remaining") {
+        remaining = Number(header.value[1])
+      }
+      if (header.value[0] == "ratelimit-reset") {
+        resetIn = Number(header.value[1]) + 1
+      }
+      header = headers.next();
+    }
+
+    var result = await response.json();
+    
+    if (remaining < 300) {
+        console.log(`Running low on API Limit ${remaining}, Waiting ${resetIn}s`)
+        await sleep(resetIn * 1000)
+    } else {
+        console.log(`Remaining API Limit: ${remaining}`)
+    }
+
+    return result
 }
 
 export const loginCNMaestro = async function (clientid: string, client_secret: string, baseURL: string) {
@@ -122,42 +149,63 @@ export const loginCNMaestro = async function (clientid: string, client_secret: s
     }
 }
 
+function delay(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
+}
 
 export async function getCNMapi(baseURL: string, apiPath: string, getAll: boolean = true) {
-    // Grab an accessToken if we don't have one yet.
-    if (accessToken === "") { 
-        accessToken = await loginCNMaestro(clientid, client_secret, baseURL) 
-    }
-
-    // Get JSON response from API
-    let res = await getApiJSON(baseURL, apiPath)
-
-    // If our API token expired, request a new ones
-    if (res.error == "invalid_client") { 
-        accessToken = await loginCNMaestro(clientid, client_secret, baseURL) // refresh accessToken
-        res = await getApiJSON(baseURL, apiPath) // retry our fetch with the new accessToken
-    }
-
-    if (res.error) { throw `Authentication to cnMaestro failed! : ${res.error}`}
-
-    let values: Array<{}> = res.data // Pull our our data results as that's what we'll be working with
-    let offset = 0 // Manually using an offset as had issues with API always returning paging.offset = 0
-
-    // Check if we need to get more
-    if (getAll && (((res.paging.limit + offset) < res.paging.total))) {
-        let offsetText = "?offset="
-        if (apiPath.includes("?")) { offsetText = "&offset=" }
-        
-        while (((res.paging.limit + offset) < res.paging.total)) {
-            offset+=res.paging.limit
-            
-            // Get JSON response from API for the next page of results
-            res = await getApiJSON(baseURL, apiPath + offsetText + offset)
-
-            // Add our new values to the existing battles.
-            values = values.concat(res.data)
+    let retries = 0
+    do {
+        // Grab an accessToken if we don't have one yet.
+        if (accessToken === "") { 
+            accessToken = await loginCNMaestro(clientid, client_secret, baseURL) 
         }
-    }
 
-    return values
+        // Get JSON response from API
+        let res = await getApiJSON(baseURL, apiPath)
+
+        // If our API token expired, request a new ones
+        if (res.error == "invalid_client") { 
+            accessToken = await loginCNMaestro(clientid, client_secret, baseURL) // refresh accessToken
+            res = await getApiJSON(baseURL, apiPath) // retry our fetch with the new accessToken
+        }
+
+        if (res.error) { throw `Authentication to cnMaestro failed! : ${res.error}`}
+
+        let values: Array<{}> = res.data // Pull our our data results as that's what we'll be working with
+        let offset = 0 // Manually using an offset as had issues with API always returning paging.offset = 0
+        
+        
+        if (res.message == "Rate limit exceeded" && retries < 10)
+        {
+            let delayTime = res.headers["ratelimit-reset"] ?? 15 
+            console.log(`Rate Limit Exceeded, Waiting ${delayTime}s to retry.`)
+            retries++
+            await delay((delayTime + 1) * 1000)
+            continue
+        } else if (res.message == "Rate limit exceeded") {
+            // We shouldn't hit this but is an escape hatch
+            throw "Rate Limit Exceeded more than 5 times"
+        } else {
+            // Check if we need to get more
+            if (getAll && (((res.paging.limit + offset) < res.paging.total))) {
+                let offsetText = "?offset="
+                if (apiPath.includes("?")) { offsetText = "&offset=" }
+
+                while (((res.paging.limit + offset) < res.paging.total)) {
+                    offset+=res.paging.limit
+
+                    // Get JSON response from API for the next page of results
+                    res = await getApiJSON(baseURL, apiPath + offsetText + offset)
+
+                    // Add our new values to the existing battles.
+                    values = values.concat(res.data)
+                }
+            } 
+
+            return values
+        }
+    } while (retries < 10)
+
+    throw "We weren't able to get a result due to Retries"
 }

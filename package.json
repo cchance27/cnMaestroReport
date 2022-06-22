@@ -24,6 +24,7 @@
     "pdfmake": "^0.1.68",
     "request": "^2.88.2",
     "roboto-font": "^0.1.0",
+    "sleep-promise": "^9.1.0",
     "toml": "^3.0.0",
     "visavail": "^1.4.1",
     "xml2js": "^0.4.23"
