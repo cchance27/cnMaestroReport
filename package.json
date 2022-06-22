@@ -1,6 +1,6 @@
 {
   "name": "cnmaestroreport",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "cnMaestro PDF Report Generation",
   "main": "bin/app.js",
   "scripts": {
