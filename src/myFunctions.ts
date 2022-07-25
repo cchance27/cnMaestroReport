@@ -42,12 +42,19 @@ export const formatNumber = function (num) {
 
 export const getReadableThroughput = function (fileSizeInBytes: number, fixedDigits: number = 0) {
     if (!fileSizeInBytes) return "0 bps"
+    if (fileSizeInBytes == Infinity)
+        return "~ bps";
+
     var i = -1;
     var byteUnits = [' kbps', ' mbps', ' gbps', ' tbps', 'pbps', 'ebps', 'zbps', 'ybps'];
     do {
         fileSizeInBytes = fileSizeInBytes / 1024;
         i++;
     } while (fileSizeInBytes > 1024);
+
+    // gigabit+ should really always have atleast 1 digit
+    if (fixedDigits == 0 && i > 1)
+        fixedDigits += 1
 
     return Math.max(fileSizeInBytes, 0.1).toFixed(fixedDigits) + byteUnits[i];
 }

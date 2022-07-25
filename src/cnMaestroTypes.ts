@@ -93,6 +93,8 @@ export class apiStatistics {
     type: string
     vlan: number
     cpu: number // new in v2
+    uplinkRates: number[] // pulled from Snmp
+    downlinkRates: number[] // pulled from Snmp
 }
 
 export class apiSmStatistics {

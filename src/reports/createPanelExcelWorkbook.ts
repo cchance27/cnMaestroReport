@@ -3,12 +3,11 @@ import { perfToTable } from '../perfToTableData'
 import * as fs from 'fs'
 import { fileDateTag} from '../timeFunctions'
 import * as Excel from 'exceljs'
-import { Bandwidth } from '../prometheusApiCalls'
 
-export async function createPanelExcelWorkbook(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, allApBandwidths: Map<string, Bandwidth>, reportDir: string = "reports") {
+export async function createPanelExcelWorkbook(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
 //
-    let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes, allApBandwidths)
+    let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes)
 //
     const workbook = new Excel.Workbook()
     workbook.creator = 'cnMaestro Automated Report'

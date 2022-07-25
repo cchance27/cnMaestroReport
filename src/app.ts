@@ -9,6 +9,7 @@ import { sendEmailReport } from './mail'
 import { deleteOldCache, deleteOldPdfs, deleteOldXls } from './caching'
 import { createPanelExcelWorkbook } from './reports/createPanelExcelWorkbook'
 import { Bandwidth, getAllPromPanelBandwidths } from './prometheusApiCalls'
+import { getSmDataRates } from './cnSnmpCalls'
 
 async function main() {
     // Cleanup Old Cache Files
@@ -20,6 +21,9 @@ async function main() {
     // Grab all of our towers APs Statitics (which includes all kinds of ap info)
     const allApStatistics: Map<string, apiStatistics[]> = await getAllApStatistics(towers)
     
+    // Update allApStatistics with SM Data Rates from SNMP
+    await getSmDataRates(allApStatistics);
+
     // Grab all clientSM Statistics
     const allSmStatistics: Map<string, apiSmStatistics[]> = await getAllSmStatistics(towers)
 
@@ -70,10 +74,10 @@ async function main() {
     }
 
     // Generate a technical report
-    attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers, allApBandwidth))
+    attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers))
 
     // Generate a Excel Sector report: WIP
-    await createPanelExcelWorkbook(allApPerformance, allApProductTypes, allApStatistics, allApBandwidth)
+    await createPanelExcelWorkbook(allApPerformance, allApProductTypes, allApStatistics)
            
     // Send email with the report
     await sendEmailReport(attachments, notices)

@@ -32,7 +32,7 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
         console.log(`Generating Tower Page: ${tower.name}`)
         let thisTowerApSms: Map<string, apiSmStatistics[]> = new Map([...allSmStatistics].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name)) // Only this towers SMs
         let thisTowerApPerformance = new Map([...allApPerformance].filter(([_, v]) => v.length > 0 && v[0].tower == tower.name))
-        let thisTowerApPerfTable = genPdfTableDDContent(perfToTable(thisTowerApPerformance, allApStatistics, allApProductTypes, allApBandwidths))
+        let thisTowerApPerfTable = genPdfTableDDContent(perfToTable(thisTowerApPerformance, allApStatistics, allApProductTypes))
         let panelRevenue = dtoTowerValuesToStackedChartData(panelsOfTowerValues(thisTowerApSms, allSmPackages, towerNames, false))
         let panelRevenueKeyCount = getNonNameNonTotalKeys(panelRevenue).length
         let panelRevenueChartHeightCount: number = (panelRevenue.length > panelRevenueKeyCount) ? panelRevenue.length : panelRevenueKeyCount

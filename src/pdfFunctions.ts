@@ -34,10 +34,16 @@ export function genPdfTableDDContent(data: {}[], highlightFieldName: string = ""
                 fillColor: ((i >= 4 && i < 9) ? '#c0d6e4' : (i >= 9) ? "#dce7ef" :'white')
             })
 
-            if (i == 4 || i == 9) { // Column 4 and 9 are the throughput column
-                widths.push(40)
+            if (i == 4 || i == 9 || i == 5 || i ==10) { 
+                widths.push(34)
             } else if (i == 6 || i == 11) {
-                widths.push(25)
+                widths.push(24) 
+            } else if (i == 1) {
+                widths.push(15) 
+            } else if (i == 3) {
+                widths.push(20) 
+            }else if ( i == 7 || i == 12) {
+                widths.push(20)
             } else {
                 widths.push('auto')
             }
@@ -49,7 +55,7 @@ export function genPdfTableDDContent(data: {}[], highlightFieldName: string = ""
         table: {
             widths: widths,
             headerRows: 2,
-            body: [headTop, headers]
+            body: [headTop, headers],
         }, 
         layout: 'lightHorizontalLines'
     }
@@ -63,7 +69,62 @@ export function genPdfTableDDContent(data: {}[], highlightFieldName: string = ""
             style: "tableCell", 
             alignment: (i == 0 ? 'left' : 'center'), 
             fillColor: fillColor ,
-            color: row[k].alerted ? 'red' : 'black'
+            color: row[k].alerted ? 'red' : 'black',
+            fontSize: 8
+        }) // alight first item left rest center
+    })))
+    return result
+}
+
+export function genPdfTableOversubContent(data: {}[], highlightFieldName: string = ""): table {
+    let headers: {}[] = []
+    let widths: any = []
+
+    if (data.length == 0) { return null }
+
+    let headTop = [
+        {}, {}, {text: 'Download', colSpan: 4, alignment: 'center', fillColor: '#c0d6e4'}, {}, {}, {},  {text: 'Upload', colSpan: 4, alignment: 'center'}, {}, {}, {}]
+
+    Object.keys(data[0]).forEach((k, i) => {
+        headers.push(
+            { 
+                text: k.replace("Download ", "").replace("Upload ", ""), 
+                style: 'tableHeader', 
+                alignment: (i == 0 ? 'left' : 'center'), 
+                fillColor: ((i >= 2 && i < 6) ? '#c0d6e4' : (i >= 6) ? "#dce7ef" :'white')
+            })
+
+            if (i == 0) {
+                widths.push(42)
+            } else if (i == 1) {
+                widths.push(20) 
+            } else { 
+                widths.push(44)
+            }
+    })
+    
+    let result = {
+        style: 'table',
+        width: 560,
+        table: {
+            widths: widths,
+            headerRows: 2,
+            body: [headTop, headers],
+        }, 
+        layout: 'lightHorizontalLines'
+    }
+
+    data.forEach(row => result.table.body.push(Object.keys(row).map((k, i) => {
+        let fillColor = ((i >= 2 && i < 6) ? '#c0d6e4' : 'white')
+        fillColor = highlightFieldName == k ? "yellow" : fillColor
+
+        return ({ 
+            text: row[k].formatted, 
+            style: "tableCell", 
+            alignment: (i == 0 ? 'left' : 'center'), 
+            fillColor: fillColor ,
+            color: row[k].alerted ? 'red' : 'black',
+            fontSize: 8
         }) // alight first item left rest center
     })))
     return result

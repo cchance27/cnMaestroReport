@@ -2,39 +2,40 @@ import { logoFile, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance } from '../cnMaestroTypes'
 import { graph, donutChart } from '../charting'
 import { getMetric } from '../cnMaestroMetricTools'
-import { perfToTable } from '../perfToTableData'
+import { perfToOversubTable, perfToTable } from '../perfToTableData'
 import { isCongested } from '../congestion'
-import { genPdfTableDDContent, generateAndSavePDF, stylizedHeading, smCountByFrequency, apCountByFrequency } from "../pdfFunctions"
+import { genPdfTableDDContent, genPdfTableOversubContent, generateAndSavePDF, stylizedHeading, smCountByFrequency, apCountByFrequency } from "../pdfFunctions"
 import * as fs from 'fs'
 import { fileStartDate, fileDateTag, formattedEndDateTime, formattedStartDateTime } from '../timeFunctions'
-import { Bandwidth } from '../prometheusApiCalls'
 
-export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allApBandwidths: Map<string, Bandwidth>, reportDir: string = "reports") {
+export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
     
     let congestionValue = 90 // 90% usage or more is congested
     
-    let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes, allApBandwidths)
-
+    let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes)
+   
     let dlFrameCongestion = perfToTable(
         new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "dl_frame_utilization"), congestionValue, 0.25))), 
-        allApStatistics, allApProductTypes, allApBandwidths)
+        allApStatistics, allApProductTypes)
 
     let anyDlFrameCongestion = perfToTable(
         new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "dl_frame_utilization"), congestionValue, 0))), 
-        allApStatistics, allApProductTypes, allApBandwidths)
+        allApStatistics, allApProductTypes)
 
     let ulFrameCongestion = perfToTable(
         new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "ul_frame_utilization"), congestionValue, 0.25))),
-        allApStatistics, allApProductTypes, allApBandwidths)
+        allApStatistics, allApProductTypes)
 
     let anyUlFrameCongestion = perfToTable(
             new Map([...allApPerformance].filter(([_, v]) => isCongested(getMetric(v, "ul_frame_utilization"), congestionValue, 0))),
-            allApStatistics, allApProductTypes, allApBandwidths)
+            allApStatistics, allApProductTypes)
 
     let apCount = [...allApPerformance].length
     console.log(`Downlink: Major Congestion ${dlFrameCongestion.length}, Minor Congestion ${anyDlFrameCongestion.length - dlFrameCongestion.length}, No Congestion: ${apCount - anyDlFrameCongestion.length}, Total Sectors: ${apCount}`)
     console.log(`Uplink: Major Congestion ${ulFrameCongestion.length}, Minor Congestion ${anyUlFrameCongestion.length - ulFrameCongestion.length}, No Congestion: ${apCount - anyUlFrameCongestion.length}, Total Sectors: ${apCount}`)
+
+    let oversubPerfTable = perfToOversubTable(allApPerformance, allApStatistics, allApProductTypes)
 
     let docDefinition: any = {
     	content: [
@@ -52,12 +53,27 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
 
             { text: "Top 10 Peak Downlink", style: 'header' }, // New Page
             { text: "Panels with the highest downlink throughput", style: 'subHeader'},
-            genPdfTableDDContent(standardPerfTable.sort((a, b) => b["Download Throughput (Max)"].value - a["Download Throughput (Max)"].value).slice(0, 10), "Download Throughput (Max)"),
+            genPdfTableDDContent(standardPerfTable.sort((a, b) => b["Download (Max)"].value - a["Download (Max)"].value).slice(0, 10), "Download (Max)"),
 
             { text: "Top 10 Peak Upload", style: 'header' }, // New Page
             { text: "Panels with the highest uplink throughput", style: 'subHeader'},
-            genPdfTableDDContent(standardPerfTable.sort((a, b) => b["Upload Throughput (Max)"].value - a["Upload Throughput (Max)"].value).slice(0, 10), "Upload Throughput (Max)"),
+            genPdfTableDDContent(standardPerfTable.sort((a, b) => b["Upload (Max)"].value - a["Upload (Max)"].value).slice(0, 10), "Upload (Max)"),
 
+            //Oversubscription
+            { columns: [
+                { text: stylizedHeading('Oversubscription Data', 24), alignment: 'left' }, 
+                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
+            { text: "Downlink Oversubscription", style: 'header' }, // New Page
+            { text: "Oversubscription based on all SMs @256QAM (2.5 group size for 450m APs)", style: 'subHeader'},
+            genPdfTableOversubContent(oversubPerfTable.sort((a, b) => (a["Download Provision Total"].value - b["Download Provision Total"].value)).reverse(), "Download Provision Total"),
+            
+            { columns: [
+                { text: stylizedHeading('Oversubscription Data', 24), alignment: 'left' }, 
+                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
+            { text: "Uplink Oversubscription", style: 'header' }, // New Page
+            { text: "Oversubscription based on all SMs @256QAM (2.5 group size for 450m APs)", style: 'subHeader'},
+            genPdfTableOversubContent(oversubPerfTable.sort((a, b) => (a['Upload Provision Total'].value - b['Upload Provision Total'].value)).reverse(), "Upload Provision Total"),
+            
             // 450i Overview Page
             { columns: [
                 { text: stylizedHeading('450/450i Attention', 24), alignment: 'left' }, 
@@ -109,7 +125,7 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
         let towerSvgs = createTowerSvgs(tower, allApStatistics, allApPerformance, allApProductTypes);
         let towersApPerformance = new Map([...allApPerformance].filter(([_, v]) => v.length > 0 && v[0].tower != undefined && v[0].tower == tower.name))
         let towersApStatistics = new Map([...allApStatistics].filter(([_, v]) => v.length > 0 && v[0].tower != undefined && v[0].tower == tower.name))
-        let thisTowerApTable = genPdfTableDDContent(perfToTable(towersApPerformance, allApStatistics, allApProductTypes, allApBandwidths))
+        let thisTowerApTable = genPdfTableDDContent(perfToTable(towersApPerformance, allApStatistics, allApProductTypes))
         
         // Tower Front Page
         docDefinition.content.push({ image: logoFile, alignment: 'center', margin: [0,200,0,10], pageBreak: 'before' })
