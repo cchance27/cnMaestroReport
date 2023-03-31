@@ -34,8 +34,13 @@ export async function getSmDataRates(allApStatistics: Map<string, apiStatistics[
                 console.log("SNMP SM Skipping PTP: " + ap.name)
             } else if (ap.status === "online") {
                 console.log("SNMP SM Package Rates: " + ap.name)
-                ap.uplinkRates = (await snmpWalk(ap.ip, "Canopyro", "1.3.6.1.4.1.161.19.3.1.4.1.38")).filter(x => x > 0 && x != 155000)
-                ap.downlinkRates = (await snmpWalk(ap.ip, "Canopyro", "1.3.6.1.4.1.161.19.3.1.4.1.36")).filter(x => x > 0 && x != 155000)
+                try
+                 {
+                    ap.uplinkRates = (await snmpWalk(ap.ip, "Canopyro", "1.3.6.1.4.1.161.19.3.1.4.1.38")).filter(x => x > 0 && x != 155000)
+                    ap.downlinkRates = (await snmpWalk(ap.ip, "Canopyro", "1.3.6.1.4.1.161.19.3.1.4.1.36")).filter(x => x > 0 && x != 155000)
+                 } catch {
+                    console.log("Error getting SNMP: " + ap.name)
+                 }
             }
         }
         //return allApStatistics; // return just first tower for debugging.

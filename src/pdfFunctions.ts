@@ -130,6 +130,58 @@ export function genPdfTableOversubContent(data: {}[], highlightFieldName: string
     return result
 }
 
+export function genPdfTableAvgModContent(data: {}[], highlightFieldName: string = ""): table {
+    let headers: {}[] = []
+    let widths: any = []
+
+    if (data.length == 0) { return null }
+
+    Object.keys(data[0]).forEach((k, i) => {
+        headers.push(
+            { 
+                text: k, 
+                style: 'tableHeader', 
+                alignment: (i == 0 ? 'left' : 'center'), 
+                fillColor: 'white'
+            })
+
+            if (i == 0) {
+                widths.push(82)
+            } else if (i == 4) {
+                widths.push(88) 
+            } else { 
+                widths.push(44)
+            }
+    })
+    
+    let result = {
+        style: 'table',
+        width: 560,
+        table: {
+            widths: widths,
+            headerRows: 1,
+            body: [headers],
+        }, 
+        layout: 'lightHorizontalLines'
+    }
+
+    data.forEach(row => result.table.body.push(Object.keys(row).map((k, i) => {
+        let fillColor = ((i >= 2 && i < 6) ? '#c0d6e4' : 'white')
+        fillColor = highlightFieldName == k ? "yellow" : fillColor
+
+        return ({ 
+            text: row[k].formatted, 
+            style: "tableCell", 
+            alignment: (i == 0 ? 'left' : 'center'), 
+            fillColor: fillColor ,
+            color: row[k].alerted ? 'red' : 'black',
+            fontSize: 8
+        }) // alight first item left rest center
+    })))
+    return result
+}
+
+
 export function stylizedHeading(section: string, size: number) {
     return [
             { text: company, font: 'DaxOTMedium', fontSize: size, color: brandColor1}, 
@@ -141,7 +193,7 @@ export function stylizedHeading(section: string, size: number) {
 export async function generateAndSavePDF(docDefinition: any, filename: string){
     // Setup Fonts
     let printer = new pdfMake(pdfFonts)
-
+    docDefinition['content'] = docDefinition['content'].filter(x => !!x)
     // Setup styles and margins
     docDefinition['styles'] = pdfStyles
     docDefinition['pageMargins'] = [ 20, 20, 20, 20 ]

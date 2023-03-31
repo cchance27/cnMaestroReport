@@ -3,6 +3,72 @@ import { calcCongestion } from "./congestion";
 import { perfToBpHz } from './bitsPerHz';
 import { maxMetricValue, meanMetricValue } from './cnMaestroMetricTools';
 import { getReadableThroughput } from './myFunctions';
+import { ModulationSet } from './prometheusApiCalls';
+
+export function perfToAvgModTable(data: Map<string, apiPerformance[]>, stat: Map<string, apiStatistics[]>, avgMods: Map<string, ModulationSet>, allApProductTypes) {
+    let result = Array.from(data.values())
+        .map((perf: apiPerformance[]) => {
+        if (perf.length === 0) return null;  
+
+        let name = perf[0].name;
+        let type = allApProductTypes.get(perf[0].name).replace("PMP ", "")
+        let thisStat = stat.get(perf[0].tower).filter(x => x.name === perf[0].name)[0];
+        let ip = thisStat.ip;
+        let sms = thisStat.downlinkRates?.length ?? maxMetricValue(perf, "sm_count", false)
+        
+         // Band
+        let frequency = thisStat.radio.frequency
+        if (frequency > 0) { 
+            frequency = frequency > 5000 ? 5 : 3
+        }
+
+        let avgScore: number = 0
+        let avgSms: number = 0
+        let thisMod = avgMods.get(ip);
+        if (thisMod !== null) {
+            Object.keys(thisMod).forEach(mod => {
+                avgSms = avgSms + thisMod[mod]
+                avgScore = avgScore + (Number(mod) * thisMod[mod])
+            })
+        }
+
+        let avgMod = avgScore/avgSms
+        avgMod = isNaN(avgMod) ? 0 : avgMod
+
+        return ({
+            "Name": { value: name, formatted: name.replace("SXM", "") },
+            "SMs": { value: sms, formatted: sms },
+            "Type": { value: type, formatted: type },
+            "Band": { value: frequency, formatted: frequency }, 
+            "Avg Modulation": { value: avgMod, formatted: valToMod(avgMod) }
+        })
+    });
+    result.filter(x => x !== null)
+    return result;
+}
+
+function valToMod(val: number): string {
+    switch(Math.round(val)) {
+        case 1: 
+            return "BPSK (" + val.toFixed(2) + ")"
+        case 2: 
+            return "QPSK (" + val.toFixed(2) + ")"
+        case 3: 
+            return "8-QAM (" + val.toFixed(2) + ")"
+        case 4: 
+            return "16-QAM (" + val.toFixed(2) + ")"
+        case 5: 
+            return "32-QAM (" + val.toFixed(2) + ")"
+        case 6: 
+            return "64-QAM (" + val.toFixed(2) + ")"
+        case 7: 
+            return "128-QAM (" + val.toFixed(2) + ")"
+        case 8: 
+            return "256-QAM  (" + val.toFixed(2) + ")"
+        default: 
+            return "N/A"
+    }
+}
 
 // PerfTable with better names to avoid having to rewrite them for the PDF Table
 export function perfToTable(data: Map<string, apiPerformance[]>, stat: Map<string, apiStatistics[]>, allApProductTypes) {

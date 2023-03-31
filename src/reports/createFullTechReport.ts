@@ -2,15 +2,15 @@ import { logoFile, brandColor1 } from '../config'
 import { apiTower, apiStatistics, apiPerformance } from '../cnMaestroTypes'
 import { graph, donutChart } from '../charting'
 import { getMetric } from '../cnMaestroMetricTools'
-import { perfToOversubTable, perfToTable } from '../perfToTableData'
+import { perfToAvgModTable, perfToOversubTable, perfToTable } from '../perfToTableData'
 import { isCongested } from '../congestion'
-import { genPdfTableDDContent, genPdfTableOversubContent, generateAndSavePDF, stylizedHeading, smCountByFrequency, apCountByFrequency } from "../pdfFunctions"
+import { genPdfTableDDContent, genPdfTableOversubContent, generateAndSavePDF, stylizedHeading, smCountByFrequency, apCountByFrequency, genPdfTableAvgModContent } from "../pdfFunctions"
 import * as fs from 'fs'
 import { fileStartDate, fileDateTag, formattedEndDateTime, formattedStartDateTime } from '../timeFunctions'
+import { ModulationSet } from '../prometheusApiCalls'
 
-export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], reportDir: string = "reports") {
+export async function createFullTechReport(allApPerformance: Map<string, apiPerformance[]>, allApProductTypes: Map<string, string[]>, allApStatistics: Map<string, apiStatistics[]>, towers: apiTower[], allApAvgModulations: Map<string, ModulationSet>, reportDir: string = "reports") {
     if (!fs.existsSync(reportDir)) { fs.mkdirSync(reportDir) }
-    
     let congestionValue = 90 // 90% usage or more is congested
     
     let standardPerfTable = perfToTable(allApPerformance, allApStatistics, allApProductTypes)
@@ -36,7 +36,9 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
     console.log(`Uplink: Major Congestion ${ulFrameCongestion.length}, Minor Congestion ${anyUlFrameCongestion.length - ulFrameCongestion.length}, No Congestion: ${apCount - anyUlFrameCongestion.length}, Total Sectors: ${apCount}`)
 
     let oversubPerfTable = perfToOversubTable(allApPerformance, allApStatistics, allApProductTypes)
-
+    
+    let avgModTable = perfToAvgModTable(allApPerformance, allApStatistics, allApAvgModulations, allApProductTypes)
+    
     let docDefinition: any = {
     	content: [
             { image: logoFile, alignment: 'center', margin: [0,200,0,50] },
@@ -58,6 +60,14 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
             { text: "Top 10 Peak Upload", style: 'header' }, // New Page
             { text: "Panels with the highest uplink throughput", style: 'subHeader'},
             genPdfTableDDContent(standardPerfTable.sort((a, b) => b["Upload (Max)"].value - a["Upload (Max)"].value).slice(0, 10), "Upload (Max)"),
+
+            //Poor Modulation APs
+            { columns: [
+               { text: stylizedHeading('AP Avg Modulations', 24), alignment: 'left' }, 
+               { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
+            {text: "Lowest Average AP Modulations", style: 'header' }, // New Page
+            {text: "Sorted by lowest Average Modulation, With at least 5 SM connected", style: 'subHeader'},
+            genPdfTableAvgModContent(avgModTable.sort((a, b) => (a['Avg Modulation'].value - b['Avg Modulation'].value)).filter(x => x.SMs.value >= 5).slice(0, 40), "Avg Modulation"),
 
             //Oversubscription
             { columns: [

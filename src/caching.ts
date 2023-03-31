@@ -5,7 +5,7 @@ import { getEipApiToObject } from './engageipApiCalls'
 import { apiSmStatistics } from './cnMaestroTypes'
 import { getCNMapi } from './cnMaestroApiCalls'
 import { fileDateTag } from './timeFunctions'
-import { Bandwidth, getPromPanelBandwidth } from './prometheusApiCalls'
+import { Bandwidth, getPromAvgMod, getPromPanelBandwidth, ModulationSet } from './prometheusApiCalls'
 const moment = require('moment')
 
 export function deleteOldCache(cacheDir: string = "cache") {
@@ -68,6 +68,32 @@ export async function getCachedPromBandwidth(ipAddress: string, dateBasedCache: 
         }
         return values
     }
+}
+
+
+export async function getCachedPromAvgMod(ipAddress: string, dateBasedCache: boolean = true, cacheDir: string = "cache"): Promise<ModulationSet> {
+    // Create cache directory if it doesn't exist
+    if (!fs.existsSync(cacheDir)) { fs.mkdirSync(cacheDir) }
+
+    let cacheFile = dateBasedCache ? `${cacheDir}/${fileDateTag()} - prometheus-avgmod-${ipAddress}.cache` : `${cacheDir}/prometheus-avgmod-${ipAddress}.cache`
+    if (fs.existsSync(cacheFile)) {
+        console.log(`Cache Restored: ${cacheFile}`)
+        try {
+            return JSON.parse(fs.readFileSync(cacheFile, 'utf8')) 
+        } catch {
+            console.log("Cache Load Error, Refetching")
+        }
+    }
+    
+    console.log(`Fetching Fresh AvgMod Prometheus: ${ipAddress}`)
+    let values = (await getPromAvgMod(ipAddress))
+    if (values === null) {
+        console.log("Cache Skipped: Values Missing")
+    } else {
+        fs.writeFileSync(cacheFile, JSON.stringify(values), 'utf8')
+        console.log(`Cache Created: ${cacheFile}`)    
+    }
+    return values
 }
 
 export async function getCachedCnMaestro(objectName: string, apiUrl: string, dateBasedCache: boolean = true, cacheDir: string = "cache") {

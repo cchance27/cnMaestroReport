@@ -8,7 +8,7 @@ import { getAllSmEipPackages } from './engageipApiCalls'
 import { sendEmailReport } from './mail'
 import { deleteOldCache, deleteOldPdfs, deleteOldXls } from './caching'
 import { createPanelExcelWorkbook } from './reports/createPanelExcelWorkbook'
-import { Bandwidth, getAllPromPanelBandwidths } from './prometheusApiCalls'
+import { Bandwidth, getAllPromPanelAvgMods, getAllPromPanelBandwidths, ModulationSet } from './prometheusApiCalls'
 import { getSmDataRates } from './cnSnmpCalls'
 
 async function main() {
@@ -40,8 +40,11 @@ async function main() {
     let attachments: string[] = []
 
     let allApBandwidth: Map<string, Bandwidth> = new Map
+    let allApAvgModulations: Map<string, ModulationSet> = new Map
+
     if (enableProm) {
         allApBandwidth = await getAllPromPanelBandwidths(allApStatistics);
+        allApAvgModulations = await getAllPromPanelAvgMods(allApStatistics);
     }
 
     let notices = "";
@@ -74,7 +77,7 @@ async function main() {
     }
 
     // Generate a technical report
-    attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers))
+    attachments.push(await createFullTechReport(allApPerformance, allApProductTypes, allApStatistics, towers, allApAvgModulations))
 
     // Generate a Excel Sector report: WIP
     await createPanelExcelWorkbook(allApPerformance, allApProductTypes, allApStatistics)
