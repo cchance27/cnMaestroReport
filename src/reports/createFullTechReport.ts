@@ -65,14 +65,11 @@ export async function createFullTechReport(allApPerformance: Map<string, apiPerf
                 { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Downlink Oversubscription", style: 'header' }, // New Page
             { text: "Oversubscription based on all SMs @256QAM (2.5 group size for 450m APs)", style: 'subHeader'},
-            genPdfTableOversubContent(oversubPerfTable.sort((a, b) => (a["Download Provision Total"].value - b["Download Provision Total"].value)).reverse(), "Download Provision Total"),
+            genPdfTableOversubContent(oversubPerfTable.sort((a, b) => (a["Download Provision Total"].value - b["Download Provision Total"].value)).reverse().slice(0, 10), "Download Provision Total"),
             
-            { columns: [
-                { text: stylizedHeading('Oversubscription Data', 24), alignment: 'left' }, 
-                { text: fileStartDate(), style: 'pageDate', color: brandColor1, alignment: 'right' }], pageBreak: 'before', margin: [0,0,0,15] },
             { text: "Uplink Oversubscription", style: 'header' }, // New Page
             { text: "Oversubscription based on all SMs @256QAM (2.5 group size for 450m APs)", style: 'subHeader'},
-            genPdfTableOversubContent(oversubPerfTable.sort((a, b) => (a['Upload Provision Total'].value - b['Upload Provision Total'].value)).reverse(), "Upload Provision Total"),
+            genPdfTableOversubContent(oversubPerfTable.sort((a, b) => (a['Upload Provision Total'].value - b['Upload Provision Total'].value)).reverse().slice(0, 10), "Upload Provision Total"),
             
             // 450i Overview Page
             { columns: [
