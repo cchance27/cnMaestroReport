@@ -1,4 +1,4 @@
-import { logoFile, brandColor1 } from '../config'
+import { logoFile, brandColor1, eurusd } from '../config'
 import { apiTower, apiStatistics, apiPerformance, apiSmStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, getNonNameNonTotalKeys, gauge } from '../charting'
 import { perfToTable } from '../perfToTableData'
@@ -15,6 +15,12 @@ export async function createHighLevelSiteReport(allApPerformance: Map<string, ap
     let towerNames = dtoApMacToNames(allApStatistics)
     let tVals = towerValues(allSmStatistics, allSmPackages)
     let formatDollar = d3.format("$,")
+
+    Object.keys(allSmPackages).forEach(esn => {
+        // Convert French EUR to USD
+        if (allSmPackages[esn].owner.startsWith("FR"))
+            allSmPackages[esn].amount *= eurusd
+    });
 
     let docDefinition: any = {
         content: [

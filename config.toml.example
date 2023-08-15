@@ -41,6 +41,7 @@ wsdlUrl = "http://engageip.domain.local/Adminportal/webservice.asmx"
 owner_id = "1"
 report_name = "ViewProfileAnswerPackageValue"
 answer_name = "Answer"
+eurusd = 1.09
 
 [prometheus]
 enable = true

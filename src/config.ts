@@ -52,6 +52,7 @@ class Configuration {
 		owner_id: string
 		report_name: string
 		answer_name: string
+		eurusd: number
 	}
 
 	// Prometheus Config
@@ -157,6 +158,7 @@ export const eipWsdlUrl = config.engageip.wsdl_url
 export const eipOwnerId = config.engageip.owner_id
 export const eipReportName = config.engageip.report_name
 export const eipAnswerField = config.engageip.answer_name
+export const eurusd = config.engageip.eurusd
 
 export const enableMail = config.mail.enable
 export const toEmailAddress = config.mail.to

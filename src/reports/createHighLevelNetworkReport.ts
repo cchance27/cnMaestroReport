@@ -1,4 +1,4 @@
-import { logoFile, brandColor1 } from '../config'
+import { logoFile, brandColor1, eurusd} from '../config'
 import { apiSmStatistics, apiStatistics } from '../cnMaestroTypes'
 import { stackedBarChart, gauge, donutChart } from '../charting'
 import { generateAndSavePDF, stylizedHeading, averageLQI, towerValues, packageValues, packageSubscribers, totalSmValue, smCountByFrequency, apCountByFrequency, towerSmCount, towerArpuValues, apPrometheusDataTotal } from "../pdfFunctions"
@@ -66,7 +66,7 @@ function ownerPageGenerator(ownerName: string, allSmPackages: {[esn: string]: ei
                 { text: " " },
                 { text: 'ARPU', style: 'header', alignment: 'center' },
                 { text: 'This Owners ARPU, this period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                { text: d3.format("($,.0f")((totalSmValue(ownerSmPackages) / Object.keys(ownerSmPackages).length)), style: 'subheader', alignment: 'center' },
+                { text: formatDollar((totalSmValue(ownerSmPackages) / Object.keys(ownerSmPackages).length)), style: 'subheader', alignment: 'center' },
                 ], width: "auto"
             },
             {
@@ -112,6 +112,12 @@ export async function createHighLevelNetworkReport(allSmStatistics: Map<string, 
     if (!fs.existsSync(reportDir)) {
         fs.mkdirSync(reportDir)
     }
+
+    Object.keys(allSmPackages).forEach(esn => {
+        // Convert French EUR to USD
+        if (allSmPackages[esn].owner.startsWith("FR"))
+            allSmPackages[esn].amount *= eurusd
+    });
 
     let avgLQI = averageLQI(allSmStatistics)
     let tVals = towerValues(allSmStatistics, allSmPackages)
@@ -164,7 +170,7 @@ export async function createHighLevelNetworkReport(allSmStatistics: Map<string, 
                                     stack: [
                                         { text: 'ARPU', style: 'header', alignment: 'center' },
                                         { text: 'Network wide, for this reports period', fontSize: '8', alignment: 'center', margin: [0, 0, 0, 5] },
-                                        { text: d3.format("($,.0f")((totalSmValue(allSmPackages) / Object.keys(allSmPackages).length)), style: 'subheader', alignment: 'center' },
+                                        { text: formatDollar((totalSmValue(allSmPackages) / Object.keys(allSmPackages).length)), style: 'subheader', alignment: 'center' },
                                     ], width: 95
                                 }
                             ]
